@@ -59,7 +59,7 @@ export function MeterBulkInput({
       if (value && (isNaN(numValue) || numValue < entry.previous_reading)) {
         entry.isValid = false;
         entry.error =
-          numValue < entry.previous_reading ? "前回より小さい" : "無効な数値";
+          numValue < entry.previous_reading ? "Өмнөхөөс бага" : "Буруу утга";
       } else {
         entry.isValid = true;
         entry.error = undefined;
@@ -89,7 +89,7 @@ export function MeterBulkInput({
     );
 
     if (validEntries.length === 0) {
-      alert("Хадгалахするメーター記録がありません");
+      alert("Хадгалах тоолуурын бүртгэл байхгүй байна");
       return;
     }
 
@@ -123,7 +123,7 @@ export function MeterBulkInput({
     return (
       <Card>
         <CardContent className="py-12 text-center text-gray-500">
-          Эзэмшигчтэйの部屋がありません
+          Түрээслэгчтэй өрөө байхгүй байна
         </CardContent>
       </Card>
     );
@@ -135,13 +135,13 @@ export function MeterBulkInput({
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-4 text-sm text-gray-600">
           <span>
-            入力済み: <strong>{filledCount}</strong> / {entries.length}
+            Оруулсан: <strong>{filledCount}</strong> / {entries.length}
           </span>
           <span>
-            総使用量: <strong>{totalConsumption.toLocaleString()}</strong>
+            Нийт хэрэглээ: <strong>{totalConsumption.toLocaleString()}</strong>
           </span>
           <span>
-            総金額: <strong>₮{totalAmount.toLocaleString()}</strong>
+            Нийт дүн: <strong>₮{totalAmount.toLocaleString()}</strong>
           </span>
         </div>
         <div className="flex items-center gap-4">
@@ -153,7 +153,7 @@ export function MeterBulkInput({
           />
           <Button onClick={handleSave} disabled={saving || filledCount === 0}>
             <Save className="mr-2 h-4 w-4" />
-            {saving ? "Хадгалах中..." : `${filledCount}件をХадгалах`}
+            {saving ? "Хадгалж байна..." : `${filledCount} бүртгэл хадгалах`}
           </Button>
         </div>
       </div>
@@ -167,19 +167,19 @@ export function MeterBulkInput({
                 өрөөний дугаар
               </th>
               <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                前回読み
+                Өмнөх заалт
               </th>
               <th className="px-4 py-3 text-center text-sm font-medium text-gray-500">
-                今回読み
+                Одоогийн заалт
               </th>
               <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                使用量
+                Хэрэглээ
               </th>
               <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                金額
+                Дүн
               </th>
               <th className="px-4 py-3 text-center text-sm font-medium text-gray-500">
-                状態
+                Төлөв
               </th>
             </tr>
           </thead>

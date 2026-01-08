@@ -37,25 +37,25 @@ interface LeaseWithRelations extends Lease {
 
 const statusConfig = {
   active: {
-    label: "契約中",
+    label: "Идэвхтэй",
     icon: CheckCircle,
     color: "text-green-600",
     bg: "bg-green-50",
   },
   pending: {
-    label: "審査中",
+    label: "Хүлээгдэж буй",
     icon: AlertTriangle,
     color: "text-yellow-600",
     bg: "bg-yellow-50",
   },
   expired: {
-    label: "満了",
+    label: "Дууссан",
     icon: AlertTriangle,
     color: "text-orange-600",
     bg: "bg-orange-50",
   },
   terminated: {
-    label: "解約済み",
+    label: "Цуцлагдсан",
     icon: XCircle,
     color: "text-red-600",
     bg: "bg-red-50",
@@ -74,7 +74,7 @@ export default function LeaseDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({
-    monthly_rent: 0,
+    price_per_sqm: 0,
     deposit: 0,
     end_date: "",
     notes: "",
@@ -105,8 +105,9 @@ export default function LeaseDetailPage() {
     }
 
     setLease(leaseData as LeaseWithRelations);
+    const unit = (leaseData as LeaseWithRelations).unit;
     setEditData({
-      monthly_rent: leaseData.monthly_rent,
+      price_per_sqm: unit?.price_per_sqm || 0,
       deposit: leaseData.deposit,
       end_date: leaseData.end_date || "",
       notes: leaseData.notes || "",
@@ -124,12 +125,25 @@ export default function LeaseDetailPage() {
   };
 
   const handleUpdateLease = async () => {
+    if (!lease) return;
     const supabase = createClient();
 
+    const calculatedRent = (lease.unit.area_sqm || 0) * editData.price_per_sqm;
+
+    // Update unit's price_per_sqm and monthly_rent
+    await supabase
+      .from("units")
+      .update({
+        price_per_sqm: editData.price_per_sqm,
+        monthly_rent: calculatedRent,
+      })
+      .eq("id", lease.unit_id);
+
+    // Update lease's monthly_rent
     await supabase
       .from("leases")
       .update({
-        monthly_rent: editData.monthly_rent,
+        monthly_rent: calculatedRent,
         deposit: editData.deposit,
         end_date: editData.end_date || null,
         notes: editData.notes || null,
@@ -141,7 +155,7 @@ export default function LeaseDetailPage() {
   };
 
   const handleTerminateLease = async () => {
-    if (!confirm("この契約を解約しますか？")) return;
+    if (!confirm("Энэ гэрээг цуцлах уу?")) return;
 
     const supabase = createClient();
 
@@ -163,8 +177,33 @@ export default function LeaseDetailPage() {
 
   const handleRenewLease = async () => {
     if (!lease) return;
+    if (!confirm("Гэрээг 1 жилээр сунгах уу?")) return;
 
     const supabase = createClient();
+
+    // Calculate dates
+    let newStartDateStr = new Date().toISOString().split("T")[0];
+    let newEndDateStr = "";
+
+    if (lease.end_date) {
+      const endDate = new Date(lease.end_date);
+
+      // New start date is day after end date
+      const nextDay = new Date(endDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      newStartDateStr = nextDay.toISOString().split("T")[0];
+
+      // New end date is old end date + 1 year
+      const nextYear = new Date(endDate);
+      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      newEndDateStr = nextYear.toISOString().split("T")[0];
+    } else {
+      const today = new Date();
+      newStartDateStr = today.toISOString().split("T")[0];
+      const nextYear = new Date(today);
+      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      newEndDateStr = nextYear.toISOString().split("T")[0];
+    }
 
     // Update current lease to expired
     await supabase
@@ -173,15 +212,12 @@ export default function LeaseDetailPage() {
       .eq("id", leaseId);
 
     // Create new lease
-    const newEndDate = new Date();
-    newEndDate.setFullYear(newEndDate.getFullYear() + 1);
-
     await supabase.from("leases").insert({
       tenant_id: lease.tenant_id,
       unit_id: lease.unit_id,
       company_id: lease.company_id,
-      start_date: new Date().toISOString().split("T")[0],
-      end_date: newEndDate.toISOString().split("T")[0],
+      start_date: newStartDateStr,
+      end_date: newEndDateStr,
       monthly_rent: lease.monthly_rent,
       deposit: lease.deposit,
       payment_due_day: lease.payment_due_day,
@@ -207,7 +243,7 @@ export default function LeaseDetailPage() {
       .upload(filePath, file);
 
     if (uploadError) {
-      alert("アップロードに失敗しました");
+      alert("Байршуулалт амжилтгүй боллоо");
       setUploading(false);
       return;
     }
@@ -233,7 +269,7 @@ export default function LeaseDetailPage() {
   };
 
   const handleDeleteDocument = async (docId: string, fileUrl: string) => {
-    if (!confirm("このドキュメントを削除しますか？")) return;
+    if (!confirm("Энэ баримтыг устгах уу?")) return;
 
     const supabase = createClient();
     await supabase.from("documents").delete().eq("id", docId);
@@ -251,7 +287,7 @@ export default function LeaseDetailPage() {
   if (loading || !lease) {
     return (
       <>
-        <Header title="契約詳細" showBack />
+        <Header title="Гэрээний дэлгэрэнгүй" showBack />
         <div className="flex h-64 items-center justify-center">
           <div className="text-gray-500">Ачааллаж байна...</div>
         </div>
@@ -265,16 +301,16 @@ export default function LeaseDetailPage() {
   return (
     <>
       <Header
-        title="契約詳細"
+        title="Гэрээний дэлгэрэнгүй"
         showBack
         action={
           lease.status === "active" && (
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleRenewLease}>
-                契約更新
+                Гэрээ сунгах
               </Button>
               <Button variant="destructive" onClick={handleTerminateLease}>
-                解約
+                Цуцлах
               </Button>
             </div>
           )
@@ -311,7 +347,7 @@ export default function LeaseDetailPage() {
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  契約詳細
+                  Гэрээний дэлгэрэнгүй
                 </CardTitle>
                 {lease.status === "active" && !editing && (
                   <Button
@@ -329,20 +365,35 @@ export default function LeaseDetailPage() {
                   <div className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <Label>Сарын түрээс</Label>
+                        <Label>m² үнэ (₮)</Label>
                         <Input
                           type="number"
-                          value={editData.monthly_rent}
+                          value={editData.price_per_sqm}
                           onChange={(e) =>
                             setEditData({
                               ...editData,
-                              monthly_rent: parseFloat(e.target.value) || 0,
+                              price_per_sqm: parseFloat(e.target.value) || 0,
                             })
                           }
                         />
                       </div>
                       <div>
-                        <Label>保証金</Label>
+                        <Label>Сарын түрээс</Label>
+                        <div className="flex h-10 items-center rounded-md border bg-gray-50 px-3 text-sm font-medium">
+                          ₮
+                          {(
+                            (lease?.unit.area_sqm || 0) * editData.price_per_sqm
+                          ).toLocaleString()}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {lease?.unit.area_sqm || 0}m² × ₮
+                          {editData.price_per_sqm.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <Label>Барьцаа</Label>
                         <Input
                           type="number"
                           value={editData.deposit}
@@ -356,7 +407,7 @@ export default function LeaseDetailPage() {
                       </div>
                     </div>
                     <div>
-                      <Label>契約終了日</Label>
+                      <Label>Гэрээ дуусах огноо</Label>
                       <Input
                         type="date"
                         value={editData.end_date}
@@ -388,15 +439,21 @@ export default function LeaseDetailPage() {
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <div className="text-sm text-gray-500">契約開始日</div>
+                      <div className="text-sm text-gray-500">
+                        Гэрээ эхлэх огноо
+                      </div>
                       <div className="font-medium">
                         {formatDate(lease.start_date)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-sm text-gray-500">契約終了日</div>
+                      <div className="text-sm text-gray-500">
+                        Гэрээ дуусах огноо
+                      </div>
                       <div className="font-medium">
-                        {lease.end_date ? formatDate(lease.end_date) : "無期限"}
+                        {lease.end_date
+                          ? formatDate(lease.end_date)
+                          : "Хугацаагүй"}
                       </div>
                     </div>
                     <div>
@@ -406,19 +463,23 @@ export default function LeaseDetailPage() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-sm text-gray-500">保証金</div>
+                      <div className="text-sm text-gray-500">Барьцаа</div>
                       <div className="font-medium">
                         ¥{formatCurrency(lease.deposit)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-sm text-gray-500">支払期日</div>
+                      <div className="text-sm text-gray-500">
+                        Төлбөрийн хугацаа
+                      </div>
                       <div className="font-medium">
-                        毎月{lease.payment_due_day}日
+                        Сар бүрийн {lease.payment_due_day}-ны өдөр
                       </div>
                     </div>
                     <div>
-                      <div className="text-sm text-gray-500">作成日</div>
+                      <div className="text-sm text-gray-500">
+                        Үүсгэсэн огноо
+                      </div>
                       <div className="font-medium">
                         {formatDate(lease.created_at)}
                       </div>
@@ -451,7 +512,7 @@ export default function LeaseDetailPage() {
                   <CardTitle className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <FileText className="h-5 w-5" />
-                      契約書類
+                      Гэрээний баримтууд
                     </span>
                     <label className="cursor-pointer">
                       <input
@@ -462,7 +523,7 @@ export default function LeaseDetailPage() {
                       />
                       <span className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-input bg-background px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground">
                         <Upload className="h-4 w-4" />
-                        {uploading ? "アップロード中..." : "アップロード"}
+                        {uploading ? "Байршуулж байна..." : "Байршуулах"}
                       </span>
                     </label>
                   </CardTitle>
@@ -470,7 +531,7 @@ export default function LeaseDetailPage() {
                 <CardContent>
                   {documents.length === 0 ? (
                     <p className="py-4 text-center text-sm text-gray-500">
-                      書類がありません
+                      Баримт байхгүй байна
                     </p>
                   ) : (
                     <div className="space-y-2">
@@ -527,27 +588,27 @@ export default function LeaseDetailPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <User className="h-4 w-4" />
-                  テナント情報
+                  Түрээслэгчийн мэдээлэл
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <div className="text-sm text-gray-500">名前</div>
+                  <div className="text-sm text-gray-500">Нэр</div>
                   <div className="font-medium">{lease.tenant.name}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-500">電話番号</div>
+                  <div className="text-sm text-gray-500">Утас</div>
                   <div className="font-medium">{lease.tenant.phone}</div>
                 </div>
                 {lease.tenant.email && (
                   <div>
-                    <div className="text-sm text-gray-500">メール</div>
+                    <div className="text-sm text-gray-500">Имэйл</div>
                     <div className="font-medium">{lease.tenant.email}</div>
                   </div>
                 )}
                 <Link href={`/dashboard/tenants/${lease.tenant.id}`}>
                   <Button variant="outline" size="sm" className="mt-2 w-full">
-                    テナント詳細を見る
+                    Түрээслэгчийн дэлгэрэнгүй
                   </Button>
                 </Link>
               </CardContent>
@@ -558,16 +619,16 @@ export default function LeaseDetailPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Building2 className="h-4 w-4" />
-                  物件・ユニット情報
+                  Хөрөнгө · Өрөөний мэдээлэл
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <div className="text-sm text-gray-500">物件</div>
+                  <div className="text-sm text-gray-500">Хөрөнгө</div>
                   <div className="font-medium">{lease.unit.property.name}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-500">ユニット</div>
+                  <div className="text-sm text-gray-500">Өрөө</div>
                   <div className="font-medium">{lease.unit.unit_number}</div>
                 </div>
                 {lease.unit.area_sqm && (
@@ -577,7 +638,7 @@ export default function LeaseDetailPage() {
                   </div>
                 )}
                 <div>
-                  <div className="text-sm text-gray-500">住所</div>
+                  <div className="text-sm text-gray-500">Хаяг</div>
                   <div className="font-medium">
                     {lease.unit.property.address}
                   </div>

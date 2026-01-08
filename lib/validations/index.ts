@@ -15,12 +15,9 @@ export type PropertyFormData = z.infer<typeof propertySchema>;
 export const unitSchema = z.object({
   unit_number: z.string().min(1, "Өрөөний дугаар заавал бөглөх ёстой"),
   floor: z.number().optional(),
-  area_sqm: z
-    .number()
-    .positive("Талбай 0-ээс их байх ёстой")
-    .optional(),
+  area_sqm: z.number().positive("Талбай 0-ээс их байх ёстой").optional(),
   rooms: z.number().min(1, "Өрөөний тоо 1-ээс дээш байх ёстой").optional(),
-  monthly_rent: z.number().min(0, "Түрээс 0-ээс дээш байх ёстой"),
+  price_per_sqm: z.number().min(0, "m² үнэ 0-ээс дээш байх ёстой").optional(),
   status: z.enum(["vacant", "occupied", "maintenance", "reserved"]).optional(),
   notes: z.string().optional(),
 });
@@ -31,7 +28,9 @@ export const bulkUnitSchema = z
   .object({
     startFloor: z.number().min(1, "Эхлэх давхар 1-ээс дээш байх ёстой"),
     endFloor: z.number().min(1, "Дуусах давхар 1-ээс дээш байх ёстой"),
-    unitsPerFloor: z.number().min(1, "Давхар тутмын өрөөний тоо 1-ээс дээш байх ёстой"),
+    unitsPerFloor: z
+      .number()
+      .min(1, "Давхар тутмын өрөөний тоо 1-ээс дээш байх ёстой"),
     prefix: z.string().optional(),
   })
   .refine((data) => data.endFloor >= data.startFloor, {
@@ -94,7 +93,11 @@ export type UnitPositionFormData = z.infer<typeof unitPositionSchema>;
 
 // Lease Management Schemas
 export const leaseTermsSchema = z.object({
-  rent_increase_rate: z.number().min(0, "0-ээс дээш").max(100, "100-аас доош").optional(),
+  rent_increase_rate: z
+    .number()
+    .min(0, "0-ээс дээш")
+    .max(100, "100-аас доош")
+    .optional(),
   rent_increase_interval: z
     .number()
     .min(1, "1 сараас дээш")
@@ -105,8 +108,14 @@ export const leaseTermsSchema = z.object({
     .min(0, "0 өдрөөс дээш")
     .max(365, "365 өдрөөс доош")
     .optional(),
-  renewal_terms: z.string().max(1000, "1000 тэмдэгтээс бага байх ёстой").optional(),
-  special_conditions: z.string().max(2000, "2000 тэмдэгтээс бага байх ёстой").optional(),
+  renewal_terms: z
+    .string()
+    .max(1000, "1000 тэмдэгтээс бага байх ёстой")
+    .optional(),
+  special_conditions: z
+    .string()
+    .max(2000, "2000 тэмдэгтээс бага байх ёстой")
+    .optional(),
 });
 
 export type LeaseTermsFormData = z.infer<typeof leaseTermsSchema>;
@@ -118,7 +127,11 @@ export const leaseSchema = z.object({
   end_date: z.string().optional(),
   monthly_rent: z.number().min(0, "Сарын түрээс 0-ээс дээш байх ёстой"),
   deposit: z.number().min(0, "Барьцаа 0-ээс дээш байх ёстой").optional(),
-  payment_due_day: z.number().min(1, "1-ээс дээш").max(28, "28-аас доош").optional(),
+  payment_due_day: z
+    .number()
+    .min(1, "1-ээс дээш")
+    .max(28, "28-аас доош")
+    .optional(),
   status: z.enum(["active", "expired", "terminated", "pending"]),
   terms: leaseTermsSchema.optional(),
   notes: z.string().max(1000, "1000 тэмдэгтээс бага байх ёстой").optional(),
@@ -128,7 +141,10 @@ export type LeaseFormData = z.infer<typeof leaseSchema>;
 
 export const leaseRenewSchema = z.object({
   end_date: z.string().optional(),
-  monthly_rent: z.number().min(0, "Сарын түрээс 0-ээс дээш байх ёстой").optional(),
+  monthly_rent: z
+    .number()
+    .min(0, "Сарын түрээс 0-ээс дээш байх ёстой")
+    .optional(),
   terms: leaseTermsSchema.optional(),
 });
 
@@ -149,8 +165,14 @@ export type DocumentUploadFormData = z.infer<typeof documentUploadSchema>;
 export const maintenanceSchema = z.object({
   property_id: z.string().uuid("Барилга сонгоно уу"),
   unit_id: z.string().uuid().optional(),
-  title: z.string().min(1, "Гарчиг заавал бөглөх ёстой").max(255, "255 тэмдэгтээс бага байх ёстой"),
-  description: z.string().max(2000, "2000 тэмдэгтээс бага байх ёстой").optional(),
+  title: z
+    .string()
+    .min(1, "Гарчиг заавал бөглөх ёстой")
+    .max(255, "255 тэмдэгтээс бага байх ёстой"),
+  description: z
+    .string()
+    .max(2000, "2000 тэмдэгтээс бага байх ёстой")
+    .optional(),
   priority: z.enum(["low", "normal", "high", "urgent"]),
   category: z.string().max(100, "100 тэмдэгтээс бага байх ёстой").optional(),
   scheduled_date: z.string().optional(),

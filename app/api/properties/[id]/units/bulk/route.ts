@@ -23,6 +23,55 @@ export async function POST(
       return NextResponse.json({ error: "Оруулсан утга буруу байна" }, { status: 400 });
     }
 
+    // Property-аас company_id авах
+    const { data: property, error: propError } = await supabase
+      .from("properties")
+      .select("company_id")
+      .eq("id", propertyId)
+      .single();
+
+    if (propError || !property) {
+      return NextResponse.json({ error: "Хөрөнгө олдсонгүй" }, { status: 404 });
+    }
+
+    // Одоо байгаа давхаруудыг авах
+    const { data: existingFloors } = await supabase
+      .from("floors")
+      .select("id, floor_number")
+      .eq("property_id", propertyId);
+
+    const floorMap = new Map<number, string>();
+    existingFloors?.forEach((f) => floorMap.set(f.floor_number, f.id));
+
+    // Шинээр үүсгэх давхаруудыг тодорхойлох
+    const floorsToCreate: Array<{
+      property_id: string;
+      floor_number: number;
+      name: string;
+    }> = [];
+
+    for (let floor = startFloor; floor <= endFloor; floor++) {
+      if (!floorMap.has(floor)) {
+        floorsToCreate.push({
+          property_id: propertyId,
+          floor_number: floor,
+          name: `${floor} давхар`,
+        });
+      }
+    }
+
+    // Шинэ давхаруудыг үүсгэх
+    if (floorsToCreate.length > 0) {
+      const { data: newFloors, error: floorError } = await supabase
+        .from("floors")
+        .insert(floorsToCreate)
+        .select("id, floor_number");
+
+      if (floorError) throw floorError;
+
+      newFloors?.forEach((f) => floorMap.set(f.floor_number, f.id));
+    }
+
     // Одоо байгаа өрөөний дугаар авах
     const { data: existingUnits } = await supabase
       .from("units")
@@ -36,6 +85,8 @@ export async function POST(
     // Өрөөний дугаар үүсгэх
     const unitsToCreate: Array<{
       property_id: string;
+      company_id: string;
+      floor_id: string;
       unit_number: string;
       floor: number;
       status: "vacant";
@@ -43,6 +94,9 @@ export async function POST(
     }> = [];
 
     for (let floor = startFloor; floor <= endFloor; floor++) {
+      const floorId = floorMap.get(floor);
+      if (!floorId) continue;
+
       for (let unit = 1; unit <= unitsPerFloor; unit++) {
         const unitNumber = `${prefix || ""}${floor}${String(unit).padStart(
           2,
@@ -59,6 +113,8 @@ export async function POST(
 
         unitsToCreate.push({
           property_id: propertyId,
+          company_id: property.company_id,
+          floor_id: floorId,
           unit_number: unitNumber,
           floor,
           status: "vacant",

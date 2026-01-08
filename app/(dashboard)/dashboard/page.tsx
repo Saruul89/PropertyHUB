@@ -25,41 +25,84 @@ export default function DashboardPage() {
     });
     const [loading, setLoading] = useState(true);
 
+    console.log('[DashboardPage] render, companyId:', companyId);
+
     useEffect(() => {
-        if (companyId) {
-            fetchStats();
+        console.log('[DashboardPage] useEffect triggered, companyId:', companyId);
+        if (!companyId) {
+            console.log('[DashboardPage] No companyId, skipping fetch');
+            return;
         }
+
+        const fetchStats = async () => {
+            const startTime = performance.now();
+            console.log('[DashboardPage] fetchStats started');
+
+            try {
+                const supabase = createClient();
+
+                // Use RPC function for single optimized query
+                console.log('[DashboardPage] Trying RPC...');
+                const rpcStart = performance.now();
+                const { data, error } = await supabase.rpc('get_dashboard_stats', {
+                    p_company_id: companyId,
+                });
+                console.log(`[DashboardPage] RPC took ${(performance.now() - rpcStart).toFixed(0)}ms, error:`, error);
+
+                if (error) throw error;
+
+                if (data) {
+                    setStats({
+                        propertyCount: data.property_count ?? 0,
+                        unitCount: data.unit_count ?? 0,
+                        vacantCount: data.vacant_count ?? 0,
+                        tenantCount: data.tenant_count ?? 0,
+                    });
+                    console.log(`[DashboardPage] DONE with RPC - total ${(performance.now() - startTime).toFixed(0)}ms`);
+                }
+            } catch (rpcError) {
+                console.log('[DashboardPage] RPC failed, using fallback:', rpcError);
+                // Fallback to individual queries if RPC not available
+                try {
+                    const supabase = createClient();
+                    const fallbackStart = performance.now();
+                    const [propertiesRes, unitsRes, tenantsRes] = await Promise.all([
+                        supabase
+                            .from('properties')
+                            .select('id', { count: 'exact' })
+                            .eq('company_id', companyId)
+                            .eq('is_active', true),
+                        supabase
+                            .from('units')
+                            .select('id, status, properties!inner(company_id)')
+                            .eq('properties.company_id', companyId),
+                        supabase
+                            .from('tenants')
+                            .select('id', { count: 'exact' })
+                            .eq('company_id', companyId)
+                            .eq('is_active', true),
+                    ]);
+                    console.log(`[DashboardPage] Fallback queries took ${(performance.now() - fallbackStart).toFixed(0)}ms`);
+
+                    const units = unitsRes.data || [];
+                    setStats({
+                        propertyCount: propertiesRes.count || 0,
+                        unitCount: units.length,
+                        vacantCount: units.filter((u: { status: string }) => u.status === 'vacant').length,
+                        tenantCount: tenantsRes.count || 0,
+                    });
+                    console.log(`[DashboardPage] DONE with fallback - total ${(performance.now() - startTime).toFixed(0)}ms`);
+                } catch (fallbackError) {
+                    console.log('[DashboardPage] Fallback also failed:', fallbackError);
+                }
+            } finally {
+                setLoading(false);
+                console.log(`[DashboardPage] setLoading(false)`);
+            }
+        };
+
+        fetchStats();
     }, [companyId]);
-
-    const fetchStats = async () => {
-        const supabase = createClient();
-
-        const [propertiesRes, unitsRes, tenantsRes] = await Promise.all([
-            supabase
-                .from('properties')
-                .select('id', { count: 'exact' })
-                .eq('company_id', companyId)
-                .eq('is_active', true),
-            supabase
-                .from('units')
-                .select('id, status, properties!inner(company_id)')
-                .eq('properties.company_id', companyId),
-            supabase
-                .from('tenants')
-                .select('id', { count: 'exact' })
-                .eq('company_id', companyId)
-                .eq('is_active', true),
-        ]);
-
-        const units = unitsRes.data || [];
-        setStats({
-            propertyCount: propertiesRes.count || 0,
-            unitCount: units.length,
-            vacantCount: units.filter((u: { status: string }) => u.status === 'vacant').length,
-            tenantCount: tenantsRes.count || 0,
-        });
-        setLoading(false);
-    };
 
     return (
         <>

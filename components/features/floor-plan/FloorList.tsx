@@ -27,7 +27,7 @@ export function FloorList({
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Layers className="mb-4 h-12 w-12 text-gray-400" />
-          <p className="text-gray-500">Давхарが登録されていません</p>
+          <p className="text-gray-500">Давхар байхгүй байна</p>
         </CardContent>
       </Card>
     );

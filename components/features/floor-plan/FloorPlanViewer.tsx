@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { FloorSelector } from "./FloorSelector";
 import { FloorPlanLegend } from "./FloorPlanLegend";
 import { UnitBlock } from "./UnitBlock";
+import { FloorElementIcon } from "./FloorElementIcon";
 import { createClient } from "@/lib/supabase/client";
 import { Floor, Unit, Tenant, Lease } from "@/types";
 import { Pencil, Info } from "lucide-react";
@@ -107,12 +108,12 @@ export function FloorPlanViewer({
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <p className="text-gray-500 mb-4">フロアプランが設定されていません</p>
+          <p className="text-gray-500 mb-4">Давхрын зураг тохируулагдаагүй байна</p>
           {showEditButton && (
             <Link href={`/dashboard/properties/${propertyId}/floor-plan/edit`}>
               <Button>
                 <Pencil className="mr-2 h-4 w-4" />
-                フロアプランを作成
+                Давхрын зураг үүсгэх
               </Button>
             </Link>
           )}
@@ -134,7 +135,7 @@ export function FloorPlanViewer({
           <Link href={`/dashboard/properties/${propertyId}/floor-plan/edit`}>
             <Button variant="outline" size="sm">
               <Pencil className="mr-2 h-4 w-4" />
-              засахモード
+              Засах горим
             </Button>
           </Link>
         )}
@@ -148,7 +149,7 @@ export function FloorPlanViewer({
               {currentFloor?.name || `${currentFloor?.floor_number}F`}
             </span>
             <span className="text-sm font-normal text-gray-500">
-              {currentFloor?.units.length || 0} ユニット
+              {currentFloor?.units.length || 0} өрөө
             </span>
           </CardTitle>
         </CardHeader>
@@ -185,6 +186,27 @@ export function FloorPlanViewer({
                     onClick={handleUnitClick}
                   />
                 ))}
+
+                {/* Floor Elements (doors, windows, stairs, elevators) */}
+                {currentFloor.elements?.map((element) => (
+                  <div
+                    key={element.id}
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: element.position_x,
+                      top: element.position_y,
+                      width: element.width || 40,
+                      height: element.height || 40,
+                      zIndex: 10,
+                    }}
+                  >
+                    <FloorElementIcon
+                      type={element.element_type}
+                      direction={element.direction}
+                      size={element.width || 40}
+                    />
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -200,7 +222,7 @@ export function FloorPlanViewer({
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Info className="h-4 w-4" />
-              {selectedUnit.unit_number} の詳細
+              {selectedUnit.unit_number} дэлгэрэнгүй
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -226,7 +248,7 @@ export function FloorPlanViewer({
                 <p className="font-medium">
                   {selectedUnit.status === "vacant" && "Сул өрөө"}
                   {selectedUnit.status === "occupied" && "Эзэмшигчтэй"}
-                  {selectedUnit.status === "maintenance" && "Засвартай中"}
+                  {selectedUnit.status === "maintenance" && "Засвартай"}
                   {selectedUnit.status === "reserved" && "Захиалсан"}
                 </p>
               </div>
@@ -235,7 +257,7 @@ export function FloorPlanViewer({
                   href={`/dashboard/properties/${propertyId}/units/${selectedUnit.id}`}
                 >
                   <Button size="sm" variant="outline">
-                    詳細を見る
+                    Дэлгэрэнгүй харах
                   </Button>
                 </Link>
               </div>

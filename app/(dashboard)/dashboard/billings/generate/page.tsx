@@ -25,6 +25,12 @@ interface LeaseWithDetails extends Lease {
   unit?: Unit & { property?: Property };
 }
 
+interface LeaseFromSupabase extends Omit<Lease, "end_date"> {
+  end_date: string | null;
+  tenants: Tenant | null;
+  units: (Unit & { properties: Property | null }) | null;
+}
+
 interface BillingItemPreview {
   fee_type_id?: string;
   fee_name: string;
@@ -96,22 +102,23 @@ export default function GenerateBillingPage() {
       .eq("company_id", companyId)
       .eq("status", "active");
 
-    if (leasesData) {
-      setLeases(
-        leasesData.map((l: Record<string, unknown>) => ({
-          ...l,
-          tenant: l.tenants as Tenant | undefined,
-          unit: l.units
-            ? {
-                ...(l.units as Unit),
-                property: (l.units as Record<string, unknown>).properties as
-                  | Property
-                  | undefined,
-              }
-            : undefined,
-        })) as LeaseWithDetails[]
-      );
-    }
+    // if (leasesData) {
+    //   setLeases(
+    //     (leasesData as LeaseFromSupabase[]).map((l) => {
+    //       const { tenants, units, ...leaseData } = l;
+    //       return {
+    //         ...leaseData,
+    //         tenant: tenants ?? undefined,
+    //         unit: units
+    //           ? {
+    //               ...units,
+    //               property: units.properties ?? undefined,
+    //             }
+    //           : undefined,
+    //       };
+    //     })
+    //   );
+    // }
 
     // Fetch fee types
     const { data: feeTypesData } = await supabase
@@ -403,7 +410,9 @@ export default function GenerateBillingPage() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-500" />
-                <h2 className="mb-2 text-xl font-semibold">Нэхэмжлэл амжилттай үүслээ</h2>
+                <h2 className="mb-2 text-xl font-semibold">
+                  Нэхэмжлэл амжилттай үүслээ
+                </h2>
                 <p className="mb-6 text-gray-600">
                   {generatedCount} нэхэмжлэл үүсгэгдлээ
                 </p>

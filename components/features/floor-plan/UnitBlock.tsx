@@ -149,7 +149,7 @@ export function UnitBlock({
             )}
             {tenant && (
               <div className="text-sm">
-                <span className="text-gray-500">テナント: </span>
+                <span className="text-gray-500">Түрээслэгч: </span>
                 {tenant.tenant_type === "company"
                   ? tenant.company_name
                   : tenant.name}
@@ -157,10 +157,10 @@ export function UnitBlock({
             )}
             {lease && (
               <div className="text-sm">
-                <span className="text-gray-500">契約期間: </span>
-                {new Date(lease.start_date).toLocaleDateString("ja-JP")}
+                <span className="text-gray-500">Гэрээний хугацаа: </span>
+                {new Date(lease.start_date).toLocaleDateString("mn-MN")}
                 {lease.end_date &&
-                  ` 〜 ${new Date(lease.end_date).toLocaleDateString("ja-JP")}`}
+                  ` - ${new Date(lease.end_date).toLocaleDateString("mn-MN")}`}
               </div>
             )}
           </div>

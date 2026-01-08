@@ -49,25 +49,25 @@ export interface MaintenanceDetailProps {
 
 const statusConfig = {
   pending: {
-    label: "未対応",
+    label: "Хүлээгдэж буй",
     icon: Clock,
     color: "text-yellow-600",
     bg: "bg-yellow-50",
   },
   in_progress: {
-    label: "対応中",
+    label: "Шийдвэрлэж буй",
     icon: Wrench,
     color: "text-blue-600",
     bg: "bg-blue-50",
   },
   completed: {
-    label: "完了",
+    label: "Дууссан",
     icon: CheckCircle,
     color: "text-green-600",
     bg: "bg-green-50",
   },
   cancelled: {
-    label: "キャンセル",
+    label: "Цуцлагдсан",
     icon: XCircle,
     color: "text-gray-600",
     bg: "bg-gray-50",
@@ -75,10 +75,10 @@ const statusConfig = {
 };
 
 const priorityConfig = {
-  low: { label: "低", color: "bg-gray-100 text-gray-700" },
-  normal: { label: "中", color: "bg-blue-100 text-blue-700" },
-  high: { label: "高", color: "bg-orange-100 text-orange-700" },
-  urgent: { label: "緊急", color: "bg-red-100 text-red-700" },
+  low: { label: "Бага", color: "bg-gray-100 text-gray-700" },
+  normal: { label: "Дунд", color: "bg-blue-100 text-blue-700" },
+  high: { label: "Өндөр", color: "bg-orange-100 text-orange-700" },
+  urgent: { label: "Яаралтай", color: "bg-red-100 text-red-700" },
 };
 
 const formatDate = (dateString: string) => {
@@ -207,7 +207,7 @@ export function MaintenanceDetail({
         {request.description && (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">詳細説明</CardTitle>
+              <CardTitle className="text-base">Дэлгэрэнгүй тайлбар</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap text-gray-700">
@@ -223,7 +223,7 @@ export function MaintenanceDetail({
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Wrench className="h-4 w-4" />
-                業者・コスト情報
+                Гүйцэтгэгч · Зардлын мэдээлэл
               </CardTitle>
               {!editing && (
                 <Button
@@ -241,7 +241,7 @@ export function MaintenanceDetail({
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <Label>業者名</Label>
+                      <Label>Гүйцэтгэгчийн нэр</Label>
                       <Input
                         value={editData.vendor_name}
                         onChange={(e) =>
@@ -253,7 +253,7 @@ export function MaintenanceDetail({
                       />
                     </div>
                     <div>
-                      <Label>業者電話番号</Label>
+                      <Label>Гүйцэтгэгчийн утас</Label>
                       <Input
                         value={editData.vendor_phone}
                         onChange={(e) =>
@@ -267,7 +267,7 @@ export function MaintenanceDetail({
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <Label>見積金額</Label>
+                      <Label>Төсөвт өртөг</Label>
                       <Input
                         type="number"
                         value={editData.estimated_cost}
@@ -280,7 +280,7 @@ export function MaintenanceDetail({
                       />
                     </div>
                     <div>
-                      <Label>実費</Label>
+                      <Label>Бодит зардал</Label>
                       <Input
                         type="number"
                         value={editData.actual_cost}
@@ -295,7 +295,7 @@ export function MaintenanceDetail({
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <Label>予定日</Label>
+                      <Label>Товлосон огноо</Label>
                       <Input
                         type="date"
                         value={editData.scheduled_date}
@@ -308,7 +308,7 @@ export function MaintenanceDetail({
                       />
                     </div>
                     <div>
-                      <Label>完了日</Label>
+                      <Label>Дууссан огноо</Label>
                       <Input
                         type="date"
                         value={editData.completed_date}
@@ -337,20 +337,20 @@ export function MaintenanceDetail({
                   <div className="flex gap-2">
                     <Button onClick={handleUpdateRequest}>Хадгалах</Button>
                     <Button variant="outline" onClick={() => setEditing(false)}>
-                      キャンセル
+                      Цуцлах
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <div className="text-sm text-gray-500">業者名</div>
+                    <div className="text-sm text-gray-500">Гүйцэтгэгчийн нэр</div>
                     <div className="font-medium">
                       {request.vendor_name || "-"}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">業者電話番号</div>
+                    <div className="text-sm text-gray-500">Гүйцэтгэгчийн утас</div>
                     <div className="font-medium">
                       {request.vendor_phone ? (
                         <a
@@ -365,7 +365,7 @@ export function MaintenanceDetail({
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">見積金額</div>
+                    <div className="text-sm text-gray-500">Төсөвт өртөг</div>
                     <div className="font-medium">
                       {request.estimated_cost
                         ? `¥${formatCurrency(request.estimated_cost)}`
@@ -373,7 +373,7 @@ export function MaintenanceDetail({
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">実費</div>
+                    <div className="text-sm text-gray-500">Бодит зардал</div>
                     <div className="font-medium">
                       {request.actual_cost
                         ? `¥${formatCurrency(request.actual_cost)}`
@@ -381,7 +381,7 @@ export function MaintenanceDetail({
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">予定日</div>
+                    <div className="text-sm text-gray-500">Товлосон огноо</div>
                     <div className="font-medium">
                       {request.scheduled_date
                         ? formatDate(request.scheduled_date)
@@ -389,7 +389,7 @@ export function MaintenanceDetail({
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">完了日</div>
+                    <div className="text-sm text-gray-500">Дууссан огноо</div>
                     <div className="font-medium">
                       {request.completed_date
                         ? formatDate(request.completed_date)
@@ -416,17 +416,17 @@ export function MaintenanceDetail({
         {/* Request Info */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">リクエスト情報</CardTitle>
+            <CardTitle className="text-base">Хүсэлтийн мэдээлэл</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <div className="text-sm text-gray-500">作成日</div>
+              <div className="text-sm text-gray-500">Үүсгэсэн огноо</div>
               <div className="font-medium">
                 {formatDate(request.created_at)}
               </div>
             </div>
             <div>
-              <div className="text-sm text-gray-500">最終更新</div>
+              <div className="text-sm text-gray-500">Сүүлийн шинэчлэл</div>
               <div className="font-medium">
                 {formatDate(request.updated_at)}
               </div>
@@ -440,16 +440,16 @@ export function MaintenanceDetail({
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <User className="h-4 w-4" />
-                依頼者情報
+                Хүсэлт гаргагчийн мэдээлэл
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <div className="text-sm text-gray-500">名前</div>
+                <div className="text-sm text-gray-500">Нэр</div>
                 <div className="font-medium">{request.tenant.name}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">電話番号</div>
+                <div className="text-sm text-gray-500">Утас</div>
                 <div className="font-medium">
                   <a
                     href={`tel:${request.tenant.phone}`}
@@ -461,7 +461,7 @@ export function MaintenanceDetail({
               </div>
               <Link href={`/dashboard/tenants/${request.tenant.id}`}>
                 <Button variant="outline" size="sm" className="mt-2 w-full">
-                  テナント詳細を見る
+                  Түрээслэгчийн дэлгэрэнгүй
                 </Button>
               </Link>
             </CardContent>
@@ -473,20 +473,20 @@ export function MaintenanceDetail({
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Building2 className="h-4 w-4" />
-              物件・ユニット情報
+              Хөрөнгө · Өрөөний мэдээлэл
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <div className="text-sm text-gray-500">物件</div>
+              <div className="text-sm text-gray-500">Хөрөнгө</div>
               <div className="font-medium">{request.unit.property.name}</div>
             </div>
             <div>
-              <div className="text-sm text-gray-500">ユニット</div>
+              <div className="text-sm text-gray-500">Өрөө</div>
               <div className="font-medium">{request.unit.unit_number}</div>
             </div>
             <div>
-              <div className="text-sm text-gray-500">住所</div>
+              <div className="text-sm text-gray-500">Хаяг</div>
               <div className="font-medium">{request.unit.property.address}</div>
             </div>
           </CardContent>
@@ -502,7 +502,7 @@ export function MaintenanceDetail({
                 onClick={() => handleStatusButtonClick("cancelled")}
               >
                 <XCircle className="mr-2 h-4 w-4" />
-                キャンセル
+                Цуцлах
               </Button>
             </CardContent>
           </Card>

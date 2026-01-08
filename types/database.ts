@@ -102,7 +102,35 @@ export interface Floor {
     plan_width?: number;
     plan_height?: number;
     plan_image_url?: string;
+    elements?: FloorElementData[];
+    template?: FloorTemplate;
     created_at: string;
+}
+
+// Template for batch floor layout
+export interface FloorTemplate {
+    units: TemplateUnit[];
+    elements: FloorElementData[];
+}
+
+export interface TemplateUnit {
+    position_x: number;
+    position_y: number;
+    width: number;
+    height: number;
+    relative_index: number;
+    area_sqm?: number;
+}
+
+// Floor element stored in floors.elements JSONB column
+export interface FloorElementData {
+    id: string;
+    element_type: FloorElementType;
+    direction: ElementDirection;
+    position_x: number;
+    position_y: number;
+    width: number;
+    height: number;
 }
 
 export interface Unit {
@@ -566,3 +594,21 @@ export const PAYMENT_METHOD = {
 
 export const BILLING_NUMBER_FORMAT = 'INV-{YYYYMM}-{0000}';
 export const DEFAULT_DUE_DAYS = 15;
+
+// Floor Element Types (stored in floors.elements JSONB column)
+export type FloorElementType = 'door' | 'window' | 'stairs' | 'elevator';
+export type ElementDirection = 'north' | 'south' | 'east' | 'west';
+
+export interface FloorSaveInput {
+    units: Array<{
+        id: string;
+        position_x: number;
+        position_y: number;
+        width: number;
+        height: number;
+        unit_number?: string;
+        area_sqm?: number;
+        status?: UnitStatus;
+    }>;
+    elements: FloorElementData[];
+}

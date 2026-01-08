@@ -5,7 +5,17 @@ export async function POST(req: NextRequest) {
     try {
         const { userId, companyName, email, phone, companyType } = await req.json();
 
+        console.log('[register-company] Starting registration for userId:', userId);
+
         const supabase = createAdminClient();
+
+        // まず認証テスト - Service Role が機能しているか確認
+        const { data: testData, error: testError } = await supabase
+            .from('companies')
+            .select('count')
+            .limit(0);
+
+        console.log('[register-company] Connection test:', { testData, testError });
 
         // Компани үүсгэх (trigger-ээр features автоматаар тохируулагдана)
         const { data: company, error: companyError } = await supabase
@@ -18,6 +28,8 @@ export async function POST(req: NextRequest) {
             })
             .select()
             .single();
+
+        console.log('[register-company] Company insert result:', { company, companyError });
 
         if (companyError) throw companyError;
 

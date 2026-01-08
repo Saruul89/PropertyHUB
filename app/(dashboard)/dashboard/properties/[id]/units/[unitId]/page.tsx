@@ -76,7 +76,7 @@ export default function UnitDetailPage() {
         setUnit((prev) => (prev ? { ...prev, status: newStatus } : null));
       } else {
         const result = await res.json();
-        alert(result.error || "Статусの更新に失敗しました");
+        alert(result.error || "Статус өөрчлөхөд алдаа гарлаа");
       }
     } finally {
       setUpdatingStatus(false);
@@ -95,17 +95,17 @@ export default function UnitDetailPage() {
         router.push(`/dashboard/properties/${propertyId}`);
       } else {
         const result = await res.json();
-        alert(result.error || "退去処理に失敗しました");
+        alert(result.error || "Алдаа гарлаа");
       }
     } catch {
-      alert("退去処理に失敗しました");
+      alert("Алдаа гарлаа");
     }
   };
 
   if (loading || !unit) {
     return (
       <>
-        <Header title="部屋詳細" showBack />
+        <Header title="Өрөөний дэлгэрэнгүй" showBack />
         <div className="flex h-64 items-center justify-center">
           <div className="text-gray-500">Ачааллаж байна...</div>
         </div>
@@ -133,7 +133,7 @@ export default function UnitDetailPage() {
                   <p className="text-gray-500">
                     {unit.floor
                       ? `${unit.floor}Давхар`
-                      : "Давхар数тохируулаагүй"}
+                      : "Давхарын тоо тохируулаагүй"}
                   </p>
                 </div>
               </div>
@@ -161,7 +161,7 @@ export default function UnitDetailPage() {
               <div className="rounded-lg bg-gray-50 p-4">
                 <p className="text-sm text-gray-500">Өрөөний тоо</p>
                 <p className="text-lg font-semibold">
-                  {unit.rooms ? `${unit.rooms}室` : "тохируулаагүй"}
+                  {unit.rooms ? `${unit.rooms} өрөө` : "тохируулаагүй"}
                 </p>
               </div>
               <div className="rounded-lg bg-gray-50 p-4">
@@ -196,7 +196,8 @@ export default function UnitDetailPage() {
               />
               {unit.status === "occupied" && (
                 <p className="text-sm text-gray-500">
-                  Эзэмшигчтэйの部屋は退去処理後にСтатусが変更されます
+                  Эзэмшигчийн өрөө суллах үйлдэл хийгдсэний дараа статус
+                  өөрчлөгдөнө
                 </p>
               )}
             </div>
@@ -208,7 +209,7 @@ export default function UnitDetailPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>現在の入居者</CardTitle>
+                <CardTitle>Одоогийн оршин суугч</CardTitle>
                 <TerminateLeaseButton
                   leaseId={lease.id}
                   onTerminate={handleTerminate}
@@ -232,15 +233,15 @@ export default function UnitDetailPage() {
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Calendar className="h-4 w-4" />
-                    <span>契約開始: {lease.start_date}</span>
+                    <span>Гэрээ эхэлсэн: {lease.start_date}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <DollarSign className="h-4 w-4" />
-                    <span>月額: ₮{lease.monthly_rent.toLocaleString()}</span>
+                    <span>Сарын: ₮{lease.monthly_rent.toLocaleString()}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <DollarSign className="h-4 w-4" />
-                    <span>敷金: ₮{lease.deposit.toLocaleString()}</span>
+                    <span>Баталгаа: ₮{lease.deposit.toLocaleString()}</span>
                   </div>
                 </div>
 

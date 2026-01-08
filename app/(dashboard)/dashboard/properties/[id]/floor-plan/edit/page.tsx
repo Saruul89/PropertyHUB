@@ -41,17 +41,17 @@ export default function FloorPlanEditPage() {
   if (!hasFloorPlan) {
     return (
       <>
-        <Header title="フロアプランзасах" showBack />
+        <Header title="Давхрын зураг засах" showBack />
         <div className="p-6">
           <div className="rounded-lg bg-yellow-50 p-4">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-yellow-600" />
               <span className="font-medium text-yellow-800">
-                フロアプラン機能は有効化されていません
+                Давхрын зураг функц идэвхжүүлээгүй байна
               </span>
             </div>
             <p className="mt-1 text-sm text-yellow-700">
-              この機能を使用するには、プランのアップグレードが必要です。
+              Давхрын зураг ашиглахын тулд идэвхжүүлэх шаардлагатай.
             </p>
           </div>
         </div>
@@ -62,7 +62,7 @@ export default function FloorPlanEditPage() {
   if (loading) {
     return (
       <>
-        <Header title="フロアプランзасах" showBack />
+        <Header title="Давхрын зураг засах" showBack />
         <div className="flex h-64 items-center justify-center">
           <div className="text-gray-500">Ачааллаж байна...</div>
         </div>
@@ -72,12 +72,9 @@ export default function FloorPlanEditPage() {
 
   return (
     <>
-      <Header title={`フロアプランзасах - ${property?.name}`} showBack />
+      <Header title={`Давхрын зураг засах - ${property?.name}`} showBack />
       <div className="p-6">
-        <FloorPlanEditor
-          propertyId={propertyId}
-          propertyName={property?.name || ""}
-        />
+        <FloorPlanEditor propertyId={propertyId} />
       </div>
     </>
   );

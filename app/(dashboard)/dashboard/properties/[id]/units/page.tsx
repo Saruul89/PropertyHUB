@@ -17,11 +17,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 const unitSchema = z.object({
-  unit_number: z.string().min(1, "өрөөний дугаарは必須です"),
+  unit_number: z.string().min(1, "өрөөний дугаар шаардлагатай"),
   floor: z.number().optional(),
   area_sqm: z.number().optional(),
   rooms: z.number().optional(),
-  monthly_rent: z.number().min(0),
+  price_per_sqm: z.number().min(0).optional(),
   notes: z.string().optional(),
 });
 
@@ -60,7 +60,7 @@ export default function UnitsPage() {
   } = useForm<UnitFormData>({
     resolver: zodResolver(unitSchema),
     defaultValues: {
-      monthly_rent: 0,
+      price_per_sqm: 0,
     },
   });
 
@@ -101,7 +101,7 @@ export default function UnitsPage() {
       floor: undefined,
       area_sqm: undefined,
       rooms: undefined,
-      monthly_rent: 0,
+      price_per_sqm: 0,
       notes: "",
     });
     setShowForm(true);
@@ -114,15 +114,52 @@ export default function UnitsPage() {
       floor: unit.floor ?? undefined,
       area_sqm: unit.area_sqm ?? undefined,
       rooms: unit.rooms ?? undefined,
-      monthly_rent: unit.monthly_rent,
+      price_per_sqm: unit.price_per_sqm ?? 0,
       notes: unit.notes || "",
     });
     setShowForm(true);
   };
 
+  // フロア番号からfloor_idを取得または作成する
+  const getOrCreateFloorId = async (
+    supabase: ReturnType<typeof createClient>,
+    floorNumber: number
+  ): Promise<string | null> => {
+    // 既存のフロアを検索
+    const { data: existingFloor } = await supabase
+      .from("floors")
+      .select("id")
+      .eq("property_id", propertyId)
+      .eq("floor_number", floorNumber)
+      .single();
+
+    if (existingFloor) {
+      return existingFloor.id;
+    }
+
+    // フロアが存在しない場合は作成
+    const { data: newFloor } = await supabase
+      .from("floors")
+      .insert({
+        property_id: propertyId,
+        floor_number: floorNumber,
+        name: `${floorNumber}F`,
+      })
+      .select("id")
+      .single();
+
+    return newFloor?.id || null;
+  };
+
   const onSubmit = async (data: UnitFormData) => {
     setSubmitting(true);
     const supabase = createClient();
+
+    // フロア番号が入力されている場合、floor_idを取得または作成
+    let floorId: string | null = null;
+    if (data.floor) {
+      floorId = await getOrCreateFloorId(supabase, data.floor);
+    }
 
     if (editingUnit) {
       const { error } = await supabase
@@ -130,16 +167,22 @@ export default function UnitsPage() {
         .update({
           unit_number: data.unit_number,
           floor: data.floor || null,
+          floor_id: floorId,
           area_sqm: data.area_sqm || null,
           rooms: data.rooms || null,
-          monthly_rent: data.monthly_rent,
+          price_per_sqm: data.price_per_sqm || null,
+          monthly_rent: (data.area_sqm || 0) * (data.price_per_sqm || 0),
           notes: data.notes || null,
         })
         .eq("id", editingUnit.id);
 
       if (!error) {
         setUnits(
-          units.map((u) => (u.id === editingUnit.id ? { ...u, ...data } : u))
+          units.map((u) =>
+            u.id === editingUnit.id
+              ? { ...u, ...data, floor_id: floorId ?? undefined }
+              : u
+          )
         );
       }
     } else {
@@ -147,11 +190,14 @@ export default function UnitsPage() {
         .from("units")
         .insert({
           property_id: propertyId,
+          company_id: property?.company_id,
           unit_number: data.unit_number,
           floor: data.floor || null,
+          floor_id: floorId,
           area_sqm: data.area_sqm || null,
           rooms: data.rooms || null,
-          monthly_rent: data.monthly_rent,
+          price_per_sqm: data.price_per_sqm || null,
+          monthly_rent: (data.area_sqm || 0) * (data.price_per_sqm || 0),
           notes: data.notes || null,
           status: "vacant",
         })
@@ -269,11 +315,11 @@ export default function UnitsPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="monthly_rent">Сарын түрээс</Label>
+                      <Label htmlFor="price_per_sqm">m² үнэ (₮)</Label>
                       <Input
-                        id="monthly_rent"
+                        id="price_per_sqm"
                         type="number"
-                        {...register("monthly_rent", { valueAsNumber: true })}
+                        {...register("price_per_sqm", { valueAsNumber: true })}
                       />
                     </div>
                   </div>

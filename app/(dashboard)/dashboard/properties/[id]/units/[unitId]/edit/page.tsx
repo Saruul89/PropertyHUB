@@ -56,7 +56,8 @@ export default function EditUnitPage() {
         floor: data.floor || null,
         area_sqm: data.area_sqm || null,
         rooms: data.rooms || null,
-        monthly_rent: data.monthly_rent || 0,
+        price_per_sqm: data.price_per_sqm || null,
+        monthly_rent: (data.area_sqm || 0) * (data.price_per_sqm || 0),
         notes: data.notes || null,
       })
       .eq("id", unitId);

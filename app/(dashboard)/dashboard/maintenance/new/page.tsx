@@ -35,14 +35,14 @@ interface UnitWithProperty extends Unit {
 }
 
 const categories = [
-  "水漏れ",
-  "電気系統",
-  "空調・換気",
-  "ドア・窓",
-  "床・壁・天井",
-  "給排水",
-  "セキュリティ",
-  "その他",
+  "Устай холбоотой",
+  "Цахилгаан",
+  "Агааржуулалт",
+  "Хаалга цонх",
+  "Хана шал тааз",
+  "Бохирын шугам",
+  "Security",
+  "Бусад",
 ];
 
 export default function NewMaintenancePage() {

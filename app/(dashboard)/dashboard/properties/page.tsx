@@ -102,9 +102,10 @@ export default function PropertiesPage() {
                                     <div className="flex items-start justify-between">
                                         <CardTitle className="text-lg">{property.name}</CardTitle>
                                         <div className="flex gap-1">
-                                            <Link href={`/dashboard/properties/${property.id}`}>
+                                            <Link href={`/dashboard/properties/${property.id}/units`}>
                                                 <Button variant="ghost" size="sm">
-                                                    <Pencil className="h-4 w-4" />
+                                                    <Pencil className="h-4 w-4" /> 
+                                                    Өрөөг удирдах
                                                 </Button>
                                             </Link>
                                             <Button
@@ -129,9 +130,9 @@ export default function PropertiesPage() {
                                         </div>
                                     </div>
                                     <div className="mt-4">
-                                        <Link href={`/dashboard/properties/${property.id}/units`}>
+                                        <Link href={`/dashboard/properties/${property.id}`}>
                                             <Button variant="outline" size="sm" className="w-full">
-                                                Өрөө удирдах
+                                                Дэлгэрэнгүй
                                             </Button>
                                         </Link>
                                     </div>

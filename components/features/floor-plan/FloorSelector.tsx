@@ -15,7 +15,9 @@ export function FloorSelector({
   onSelect,
 }: FloorSelectorProps) {
   if (floors.length === 0) {
-    return <div className="text-sm text-gray-500 py-2">Давхарがありません</div>;
+    return (
+      <div className="text-sm text-gray-500 py-2">Давхар байхгүй байна</div>
+    );
   }
 
   return (

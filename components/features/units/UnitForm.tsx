@@ -37,7 +37,7 @@ export function UnitForm({
       floor: defaultValues?.floor ?? undefined,
       area_sqm: defaultValues?.area_sqm ?? undefined,
       rooms: defaultValues?.rooms ?? undefined,
-      monthly_rent: defaultValues?.monthly_rent ?? 0,
+      price_per_sqm: defaultValues?.price_per_sqm ?? 0,
       status: defaultValues?.status || "vacant",
       notes: defaultValues?.notes || "",
     },
@@ -91,11 +91,11 @@ export function UnitForm({
           />
         </div>
         <div>
-          <Label htmlFor="monthly_rent">Сарын түрээс</Label>
+          <Label htmlFor="price_per_sqm">m² үнэ (₮)</Label>
           <Input
-            id="monthly_rent"
+            id="price_per_sqm"
             type="number"
-            {...register("monthly_rent", { valueAsNumber: true })}
+            {...register("price_per_sqm", { valueAsNumber: true })}
           />
         </div>
       </div>

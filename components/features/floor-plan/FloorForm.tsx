@@ -62,7 +62,7 @@ export function FloorForm({
         plan_image_url: data.plan_image_url || undefined,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      setError(err instanceof Error ? err.message : "Алдаа гарлаа");
     }
   };
 
@@ -95,18 +95,18 @@ export function FloorForm({
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                地下はマイナス値（例: -1）
+                Газар доорх давхрыг сөрөг тоогоор (жишээ: -1)
               </p>
             </div>
             <div>
-              <Label htmlFor="name">表示名</Label>
+              <Label htmlFor="name">Нэр</Label>
               <Input
                 id="name"
                 {...register("name")}
-                placeholder="例: 1F, B1, 屋上"
+                placeholder="Жишээ: 1F, B1, Дээвэр"
               />
               <p className="mt-1 text-xs text-gray-500">
-                空の場合は「{"{"}Давхар数{"}"}F」が使用されます
+                Хоосон бол давхарын дугаар + F ашиглана
               </p>
             </div>
           </div>
@@ -114,7 +114,7 @@ export function FloorForm({
           {/* Plan Dimensions */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="plan_width">プラン幅（px）</Label>
+              <Label htmlFor="plan_width">Зургийн өргөн (px)</Label>
               <Input
                 id="plan_width"
                 type="number"
@@ -128,7 +128,7 @@ export function FloorForm({
               )}
             </div>
             <div>
-              <Label htmlFor="plan_height">プラン高さ（px）</Label>
+              <Label htmlFor="plan_height">Зургийн өндөр (px)</Label>
               <Input
                 id="plan_height"
                 type="number"
@@ -145,7 +145,7 @@ export function FloorForm({
 
           {/* Background Image URL */}
           <div>
-            <Label htmlFor="plan_image_url">背景画像URL（オプション）</Label>
+            <Label htmlFor="plan_image_url">Дэвсгэр зургийн URL (заавал биш)</Label>
             <Input
               id="plan_image_url"
               {...register("plan_image_url")}
@@ -157,7 +157,7 @@ export function FloorForm({
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              間取り図やフロアプランの画像URL
+              Давхрын зургийн URL
             </p>
           </div>
 
@@ -166,7 +166,7 @@ export function FloorForm({
               Цуцлах
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "処理中..." : isEditing ? "更新" : "追加"}
+              {isLoading ? "Хадгалж байна..." : isEditing ? "Шинэчлэх" : "Нэмэх"}
             </Button>
           </div>
         </form>

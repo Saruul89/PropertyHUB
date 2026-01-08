@@ -158,8 +158,8 @@ export default function BulkMeterEntryPage() {
       entry.isValid = false;
       entry.error =
         numValue < entry.previous_reading
-          ? "前回の数値より小さい値は入力できません"
-          : "有効な数値を入力してください";
+          ? "Өмнөх утгаас бага байж болохгүй"
+          : "Зөв утга оруулна уу";
     } else {
       entry.isValid = true;
       entry.error = undefined;
@@ -189,7 +189,7 @@ export default function BulkMeterEntryPage() {
     );
 
     if (validEntries.length === 0) {
-      alert("Хадгалахするメーター記録がありません");
+      alert("Хадгалах тоолуурын бүртгэл байхгүй байна");
       return;
     }
 
@@ -212,7 +212,7 @@ export default function BulkMeterEntryPage() {
     setSaving(false);
 
     if (error) {
-      alert("Хадгалахに失敗しました: " + error.message);
+      alert("Хадгалахад алдаа гарлаа: " + error.message);
     } else {
       router.push("/dashboard/meter-readings");
     }
@@ -234,14 +234,14 @@ export default function BulkMeterEntryPage() {
   if (!hasMeterReadings) {
     return (
       <>
-        <Header title="メーター一括入力" showBack />
+        <Header title="Тоолуурын бүртгэл" showBack />
         <div className="p-6">
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Save className="mb-4 h-12 w-12 text-gray-400" />
-              <p className="text-gray-600">メーター機能は利用できません</p>
+              <p className="text-gray-600">Тоолуурын функц идэвхгүй байна</p>
               <p className="text-sm text-gray-500">
-                この機能を有効にするには管理者にお問い合わせください
+                Энэ функцийг идэвхжүүлэхийн тулд админтай холбогдоно уу
               </p>
             </CardContent>
           </Card>
@@ -252,24 +252,24 @@ export default function BulkMeterEntryPage() {
 
   return (
     <>
-      <Header title="メーター一括入力" showBack />
+      <Header title="Тоолуурын бүртгэл" showBack />
       <div className="p-6">
         {/* Selection */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">入力条件を選択</CardTitle>
+            <CardTitle className="text-lg">Оруулах нөхцөл сонгох</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">
               <div>
-                <Label htmlFor="property">物件</Label>
+                <Label htmlFor="property">Хөрөнгө</Label>
                 <select
                   id="property"
                   value={selectedProperty}
                   onChange={(e) => setSelectedProperty(e.target.value)}
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="">物件を選択</option>
+                  <option value="">Хөрөнгө сонгох</option>
                   {properties.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
@@ -278,24 +278,23 @@ export default function BulkMeterEntryPage() {
                 </select>
               </div>
               <div>
-                <Label htmlFor="feeType">料金タイプ</Label>
+                <Label htmlFor="feeType">Төлбөрийн төрөл</Label>
                 <select
                   id="feeType"
                   value={selectedFeeType}
                   onChange={(e) => setSelectedFeeType(e.target.value)}
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="">料金タイプを選択</option>
+                  <option value="">Төлбөрийн төрөл сонгох</option>
                   {feeTypes.map((f) => (
                     <option key={f.id} value={f.id}>
-                      {f.name}（単価: ₮{f.default_unit_price?.toLocaleString()}
-                      ）
+                      {f.name}（Нэгжийн үнэ: ₮{f.default_unit_price?.toLocaleString()}）
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <Label htmlFor="readingDate">記録日</Label>
+                <Label htmlFor="readingDate">Бүртгэлийн огноо</Label>
                 <Input
                   id="readingDate"
                   type="date"
@@ -314,13 +313,13 @@ export default function BulkMeterEntryPage() {
         ) : !selectedProperty || !selectedFeeType ? (
           <Card>
             <CardContent className="py-12 text-center text-gray-500">
-              物件と料金タイプを選択してください
+              Хөрөнгө болон төлбөрийн төрлийг сонгоно уу
             </CardContent>
           </Card>
         ) : entries.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-gray-500">
-              Эзэмшигчтэйの部屋がありません
+              Түрээслэгчтэй өрөө байхгүй байна
             </CardContent>
           </Card>
         ) : (
@@ -329,13 +328,13 @@ export default function BulkMeterEntryPage() {
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <span>
-                  入力済み: <strong>{filledCount}</strong> / {entries.length}
+                  Оруулсан: <strong>{filledCount}</strong> / {entries.length}
                 </span>
                 <span>
-                  総使用量: <strong>{totalConsumption.toLocaleString()}</strong>
+                  Нийт хэрэглээ: <strong>{totalConsumption.toLocaleString()}</strong>
                 </span>
                 <span>
-                  総金額: <strong>₮{totalAmount.toLocaleString()}</strong>
+                  Нийт дүн: <strong>₮{totalAmount.toLocaleString()}</strong>
                 </span>
               </div>
               <Button
@@ -343,7 +342,7 @@ export default function BulkMeterEntryPage() {
                 disabled={saving || filledCount === 0}
               >
                 <Save className="mr-2 h-4 w-4" />
-                {saving ? "Хадгалах中..." : `${filledCount}件をХадгалах`}
+                {saving ? "Хадгалж байна..." : `${filledCount} бүртгэл хадгалах`}
               </Button>
             </div>
 
@@ -356,19 +355,19 @@ export default function BulkMeterEntryPage() {
                       өрөөний дугаар
                     </th>
                     <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                      前回読み
+                      Өмнөх заалт
                     </th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-gray-500">
-                      今回読み
+                      Одоогийн заалт
                     </th>
                     <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                      使用量
+                      Хэрэглээ
                     </th>
                     <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
-                      金額
+                      Дүн
                     </th>
                     <th className="px-4 py-3 text-center text-sm font-medium text-gray-500">
-                      状態
+                      Төлөв
                     </th>
                   </tr>
                 </thead>
