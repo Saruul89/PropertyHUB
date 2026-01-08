@@ -192,3 +192,28 @@ export const maintenanceCompleteSchema = z.object({
 export type MaintenanceCompleteFormData = z.infer<
   typeof maintenanceCompleteSchema
 >;
+
+// Company Profile Schema
+export const companyProfileSchema = z.object({
+  name: z.string().min(1, "Компанийн нэр заавал бөглөх ёстой"),
+  email: z.string().email("Зөв имэйл хаяг оруулна уу"),
+  phone: z.string().min(8, "Утасны дугаар хамгийн багадаа 8 оронтой байх ёстой"),
+  address: z.string().optional().or(z.literal("")),
+  logo_url: z.string().url("Зөв URL оруулна уу").optional().or(z.literal("")),
+  bank_name: z.string().optional().or(z.literal("")),
+  bank_account_number: z.string().optional().or(z.literal("")),
+  bank_account_name: z.string().optional().or(z.literal("")),
+  business_hours: z.string().optional().or(z.literal("")),
+});
+
+export type CompanyProfileFormData = z.infer<typeof companyProfileSchema>;
+
+// Staff Schema
+export const staffSchema = z.object({
+  name: z.string().min(1, "Нэр заавал бөглөх ёстой"),
+  email: z.string().email("Зөв имэйл хаяг оруулна уу"),
+  phone: z.string().optional().or(z.literal("")),
+  is_active: z.boolean().optional(),
+});
+
+export type StaffFormData = z.infer<typeof staffSchema>;

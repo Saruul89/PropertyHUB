@@ -36,6 +36,10 @@ export interface CompanySettings {
     currency: string;
     billing_day: number;
     payment_due_days: number;
+    bank_name?: string;
+    bank_account_number?: string;
+    bank_account_name?: string;
+    business_hours?: string;
 }
 
 export interface Company {
@@ -75,6 +79,10 @@ export interface CompanyUser {
     user_id: string;
     role: 'admin' | 'staff';
     is_active: boolean;
+    user_email?: string;
+    user_name?: string;
+    user_phone?: string;
+    initial_password?: string;
     created_at: string;
 }
 

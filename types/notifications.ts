@@ -43,6 +43,10 @@ export interface NotificationSettings {
     // Sender settings
     sender_email?: string;
     sender_name?: string;
+    // Template settings
+    payment_reminder_days_before: number;
+    billing_issued_template?: string;
+    payment_reminder_template?: string;
     updated_at: string;
 }
 
@@ -57,6 +61,9 @@ export interface NotificationSettingsInput {
     sms_account_created?: boolean;
     sender_email?: string;
     sender_name?: string;
+    payment_reminder_days_before?: number;
+    billing_issued_template?: string;
+    payment_reminder_template?: string;
 }
 
 export interface SendNotificationInput {
@@ -64,6 +71,8 @@ export interface SendNotificationInput {
     channels: ('email' | 'sms')[];
     recipient_ids: string[];
     template_data?: Record<string, unknown>;
+    /** 開発用：重複チェックをスキップ (本番では無効) */
+    skip_duplicate_check?: boolean;
 }
 
 export interface QueueNotificationInput {
@@ -74,6 +83,8 @@ export interface QueueNotificationInput {
     channel: 'email' | 'sms';
     template_data: Record<string, unknown>;
     scheduled_at?: string;
+    /** 開発用：重複チェックをスキップ */
+    skip_duplicate_check?: boolean;
 }
 
 // Email template data interfaces

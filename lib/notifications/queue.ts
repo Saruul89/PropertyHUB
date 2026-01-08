@@ -41,6 +41,15 @@ import type {
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MINUTES = 15;
 
+/**
+ * Format billing month (YYYY-MM) to display format (YYYY оны MM сар)
+ */
+function formatMonth(billingMonth: string): string {
+    if (!billingMonth) return '';
+    const [year, month] = billingMonth.split('-');
+    return `${year} оны ${parseInt(month)} сар`;
+}
+
 interface QueueResult {
     success: boolean;
     queueId?: string;
@@ -55,20 +64,33 @@ interface QueueResult {
 export async function queueNotification(input: QueueNotificationInput): Promise<QueueResult> {
     const supabase = createAdminClient();
 
-    // Check for duplicate notifications (rate limiting)
-    const duplicateCheck = await checkDuplicateNotification(
-        input.company_id,
-        input.recipient_id,
-        input.notification_type,
-        input.channel
-    );
+    console.log('[Queue] queueNotification called:', {
+        recipient_id: input.recipient_id,
+        notification_type: input.notification_type,
+        channel: input.channel,
+        skip_duplicate_check: input.skip_duplicate_check
+    });
 
-    if (duplicateCheck.isDuplicate) {
-        return {
-            success: true,
-            skipped: true,
-            skipReason: duplicateCheck.reason
-        };
+    // Check for duplicate notifications (rate limiting)
+    // Skip duplicate check if explicitly requested (開発用)
+    if (!input.skip_duplicate_check) {
+        const duplicateCheck = await checkDuplicateNotification(
+            input.company_id,
+            input.recipient_id,
+            input.notification_type,
+            input.channel
+        );
+
+        if (duplicateCheck.isDuplicate) {
+            console.log('[Queue] Skipped - duplicate:', duplicateCheck.reason);
+            return {
+                success: true,
+                skipped: true,
+                skipReason: duplicateCheck.reason
+            };
+        }
+    } else {
+        console.log('[Queue] Duplicate check skipped (開発モード)');
     }
 
     // Check if recipient has valid contact info
@@ -79,6 +101,7 @@ export async function queueNotification(input: QueueNotificationInput): Promise<
     );
 
     if (!contactCheck.valid) {
+        console.log('[Queue] Skipped - contact check failed:', contactCheck.reason);
         return {
             success: true,
             skipped: true,
@@ -124,11 +147,7 @@ export async function processNotificationQueue(limit: number = 50): Promise<{
     // Get pending notifications that are scheduled to send
     const { data: pendingNotifications, error } = await supabase
         .from('notifications_queue')
-        .select(`
-            *,
-            tenants:recipient_id(id, name, email, phone),
-            companies:company_id(name, phone)
-        `)
+        .select('*')
         .eq('status', 'pending')
         .lte('scheduled_at', new Date().toISOString())
         .lt('attempts', MAX_RETRY_ATTEMPTS)
@@ -140,12 +159,34 @@ export async function processNotificationQueue(limit: number = 50): Promise<{
         return { processed: 0, sent: 0, failed: 0, skipped: 0 };
     }
 
+    console.log(`[Queue] Found ${pendingNotifications?.length || 0} pending notifications`);
+
     let sent = 0;
     let failed = 0;
     let skipped = 0;
 
     for (const notification of pendingNotifications || []) {
-        const result = await processNotification(notification);
+        // Fetch tenant data separately
+        const { data: tenant } = await supabase
+            .from('tenants')
+            .select('id, name, email, phone')
+            .eq('id', notification.recipient_id)
+            .single();
+
+        // Fetch company data separately
+        const { data: company } = await supabase
+            .from('companies')
+            .select('name, phone')
+            .eq('id', notification.company_id)
+            .single();
+
+        const notificationWithData = {
+            ...notification,
+            tenants: tenant,
+            companies: company,
+        };
+
+        const result = await processNotification(notificationWithData);
 
         if (result.status === 'sent') {
             sent++;
@@ -197,6 +238,40 @@ async function processNotification(notification: {
 
     let sendResult: { success: boolean; error?: string };
 
+    // Enrich template data with tenant and company info
+    let enrichedTemplateData: Record<string, unknown> = {
+        ...notification.template_data,
+        tenant_name: tenant.name,
+        company_name: notification.companies?.name || '',
+        company_phone: notification.companies?.phone || '',
+        portal_url: process.env.NEXT_PUBLIC_APP_URL || 'https://propertyhub.mn',
+    };
+
+    // For billing_issued, fetch the latest billing data for this tenant
+    if (notification.notification_type === 'billing_issued') {
+        const billingMonth = notification.template_data.billing_month as string;
+        const { data: billing } = await supabase
+            .from('billings')
+            .select('billing_number, total_amount')
+            .eq('tenant_id', notification.recipient_id)
+            .eq('billing_month', `${billingMonth}-01`)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        console.log('[Queue] Fetched billing data:', billing);
+
+        enrichedTemplateData = {
+            ...enrichedTemplateData,
+            month: billingMonth ? formatMonth(billingMonth) : '',
+            billing_month: billingMonth,
+            total_amount: billing?.total_amount || 0,
+            billing_number: billing?.billing_number || 'N/A',
+        };
+    }
+
+    console.log('[Queue] Enriched template data:', enrichedTemplateData);
+
     if (notification.channel === 'email') {
         if (!tenant.email) {
             await updateNotificationStatus(notification.id, 'skipped', 'No email address');
@@ -205,7 +280,7 @@ async function processNotification(notification: {
 
         const emailContent = generateEmailContent(
             notification.notification_type,
-            notification.template_data as Record<string, unknown>
+            enrichedTemplateData
         );
 
         if (!emailContent) {
@@ -344,18 +419,23 @@ async function checkRecipientContact(
 ): Promise<{ valid: boolean; reason?: string }> {
     const supabase = createAdminClient();
 
+    console.log('[Queue] checkRecipientContact:', { recipientType, recipientId, channel });
+
     if (recipientType === 'tenant') {
-        const { data: tenant } = await supabase
+        const { data: tenant, error } = await supabase
             .from('tenants')
-            .select('email, phone')
+            .select('id, name, email, phone')
             .eq('id', recipientId)
             .single();
+
+        console.log('[Queue] Tenant data:', tenant, 'Error:', error);
 
         if (!tenant) {
             return { valid: false, reason: 'Tenant not found' };
         }
 
         if (channel === 'email' && !tenant.email) {
+            console.log('[Queue] Tenant has no email:', tenant.name);
             return { valid: false, reason: 'No email address' };
         }
 

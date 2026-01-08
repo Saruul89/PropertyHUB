@@ -13,9 +13,7 @@ import {
     Plus,
     Search,
     FileText,
-    Calendar,
     Building2,
-    User,
     AlertTriangle,
     CheckCircle,
     Clock,
@@ -59,7 +57,12 @@ export default function LeasesPage() {
             );
         }
 
-        if (statusFilter !== 'all') {
+        if (statusFilter === 'expiring_soon') {
+            filtered = filtered.filter((lease) => {
+                const days = getDaysUntilExpiry(lease.end_date);
+                return days !== null && days <= 30 && days > 0 && lease.status === 'active';
+            });
+        } else if (statusFilter !== 'all') {
             filtered = filtered.filter((lease) => lease.status === statusFilter);
         }
 
@@ -144,15 +147,20 @@ export default function LeasesPage() {
                             className="pl-10"
                         />
                     </div>
-                    <div className="flex gap-2">
-                        {['all', 'active', 'pending', 'expired', 'terminated'].map((status) => (
+                    <div className="flex flex-wrap gap-2">
+                        {['all', 'active', 'pending', 'expiring_soon', 'expired', 'terminated'].map((status) => (
                             <Button
                                 key={status}
                                 variant={statusFilter === status ? 'default' : 'outline'}
                                 size="sm"
                                 onClick={() => setStatusFilter(status)}
+                                className={status === 'expiring_soon' && statusFilter !== status ? 'border-orange-300 text-orange-600 hover:bg-orange-50' : ''}
                             >
-                                {status === 'all' ? 'Бүгд' : statusConfig[status as keyof typeof statusConfig].label}
+                                {status === 'all'
+                                    ? 'Бүгд'
+                                    : status === 'expiring_soon'
+                                        ? '30 хоногт дуусах'
+                                        : statusConfig[status as keyof typeof statusConfig].label}
                             </Button>
                         ))}
                     </div>

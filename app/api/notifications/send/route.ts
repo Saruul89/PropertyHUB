@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
                         company_name: company.name,
                         company_phone: company.phone || '',
                     },
+                    skip_duplicate_check: body.skip_duplicate_check,
                 });
 
                 if (result.success) {

@@ -21,6 +21,7 @@ import {
     Filter,
     ChevronLeft,
     ChevronRight,
+    Trash2,
 } from 'lucide-react';
 
 interface BillingWithDetails extends Billing {
@@ -46,6 +47,7 @@ export default function BillingsPage() {
     const [statusFilter, setStatusFilter] = useState<BillingStatus | 'all'>('all');
     const [currentPage, setCurrentPage] = useState(0);
     const [totalCount, setTotalCount] = useState(0);
+    const [deleting, setDeleting] = useState<string | null>(null);
 
     useEffect(() => {
         if (companyId) {
@@ -96,6 +98,30 @@ export default function BillingsPage() {
     };
 
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+    const handleDelete = async (billingId: string, billingNumber: string | null) => {
+        if (!confirm(`"${billingNumber || billingId}" нэхэмжлэхийг устгах уу?`)) {
+            return;
+        }
+
+        setDeleting(billingId);
+        const supabase = createClient();
+
+        // First delete billing items
+        await supabase.from('billing_items').delete().eq('billing_id', billingId);
+
+        // Then delete the billing
+        const { error } = await supabase.from('billings').delete().eq('id', billingId);
+
+        if (error) {
+            alert('Устгахад алдаа гарлаа: ' + error.message);
+        } else {
+            setBillings((prev) => prev.filter((b) => b.id !== billingId));
+            setTotalCount((prev) => prev - 1);
+        }
+
+        setDeleting(null);
+    };
 
     // Search is done client-side on the current page (status filter is done in DB)
     const filteredBillings = billings.filter((billing) => {
@@ -303,12 +329,21 @@ export default function BillingsPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex justify-end gap-2">
+                                                <div className="flex justify-end gap-1">
                                                     <Link href={`/dashboard/billings/${billing.id}`}>
                                                         <Button variant="ghost" size="sm">
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleDelete(billing.id, billing.billing_number ?? null)}
+                                                        disabled={deleting === billing.id}
+                                                        className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             </td>
                                         </tr>

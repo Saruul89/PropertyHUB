@@ -1,19 +1,18 @@
 /**
  * Email Service using Resend
  *
- * ⚠️ 注意点:
- * - 送信前に必ず email_notifications フラグをチェック
- * - メールアドレスが空の場合は送信スキップ
- * - 送信失敗時はリトライキューに入れる
+ * Required env variables:
+ * - RESEND_API_KEY: Your Resend API key
+ * - RESEND_FROM_EMAIL: Sender email (default: onboarding@resend.dev for testing)
  */
 
 import { Resend } from 'resend';
 
-const resend = process.env.RESEND_API_KEY
-    ? new Resend(process.env.RESEND_API_KEY)
-    : null;
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'PropertyHub <onboarding@resend.dev>';
 
-const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@propertyhub.mn';
+// Initialize Resend client
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 interface SendEmailParams {
     to: string;
@@ -31,12 +30,12 @@ interface SendEmailResult {
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
-    // Check if email service is configured
-    if (!resend) {
-        console.warn('Email service not configured. RESEND_API_KEY is missing.');
+    // Check if Resend is configured
+    if (!resend || !RESEND_API_KEY) {
+        console.warn("[Email] Resend not configured. Set RESEND_API_KEY env variable.");
         return {
             success: false,
-            error: 'Email service not configured'
+            error: "Email service not configured. Set RESEND_API_KEY.",
         };
     }
 
@@ -44,48 +43,62 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     if (!params.to || !isValidEmail(params.to)) {
         return {
             success: false,
-            error: 'Invalid or missing email address'
+            error: "Invalid or missing email address",
         };
     }
 
     try {
-        const fromAddress = params.fromName
-            ? `${params.fromName} <${params.from || EMAIL_FROM}>`
-            : params.from || EMAIL_FROM;
+        console.log("[Email] Sending email via Resend to:", params.to);
+        console.log("[Email] Subject:", params.subject);
+        console.log("[Email] From:", params.from || FROM_EMAIL);
 
         const { data, error } = await resend.emails.send({
-            from: fromAddress,
+            from: params.from || FROM_EMAIL,
             to: params.to,
             subject: params.subject,
             text: params.text,
-            html: params.html || params.text.replace(/\n/g, '<br>'),
+            html: params.html || params.text.replace(/\n/g, "<br>"),
         });
 
         if (error) {
-            console.error('Failed to send email:', error);
+            console.error("[Email] Resend error:", error);
             return {
                 success: false,
-                error: error.message
+                error: error.message,
             };
         }
 
+        console.log("[Email] Successfully sent! Message ID:", data?.id);
         return {
             success: true,
-            messageId: data?.id
+            messageId: data?.id,
         };
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.error('Email send error:', errorMessage);
+        console.error("[Email] Full error:", err);
+
+        let errorMessage = "Unknown error";
+        if (err instanceof Error) {
+            errorMessage = err.message;
+        } else if (typeof err === 'object' && err !== null) {
+            errorMessage = JSON.stringify(err);
+        }
+
+        console.error("[Email] Send error:", errorMessage);
         return {
             success: false,
-            error: errorMessage
+            error: errorMessage,
         };
     }
 }
 
-function isValidEmail(email: string): boolean {
+export function isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 }
 
-export { isValidEmail };
+/**
+ * Check if Resend is properly configured
+ */
+export const isEmailConfigured = (): boolean => {
+    return Boolean(RESEND_API_KEY);
+};

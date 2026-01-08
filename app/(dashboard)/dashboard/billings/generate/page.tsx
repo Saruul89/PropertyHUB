@@ -50,6 +50,11 @@ export default function GenerateBillingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [generatedCount, setGeneratedCount] = useState(0);
+  const [emailSentCount, setEmailSentCount] = useState(0);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  // 開発用: 重複通知チェックをスキップ
+  const [skipDuplicateCheck, setSkipDuplicateCheck] = useState(false);
 
   // Step 1: Select billing month
   const [billingMonth, setBillingMonth] = useState(() => {
@@ -102,23 +107,24 @@ export default function GenerateBillingPage() {
       .eq("company_id", companyId)
       .eq("status", "active");
 
-    // if (leasesData) {
-    //   setLeases(
-    //     (leasesData as LeaseFromSupabase[]).map((l) => {
-    //       const { tenants, units, ...leaseData } = l;
-    //       return {
-    //         ...leaseData,
-    //         tenant: tenants ?? undefined,
-    //         unit: units
-    //           ? {
-    //               ...units,
-    //               property: units.properties ?? undefined,
-    //             }
-    //           : undefined,
-    //       };
-    //     })
-    //   );
-    // }
+    if (leasesData) {
+      setLeases(
+        (leasesData as LeaseFromSupabase[]).map((l) => {
+          const { tenants, units, ...leaseData } = l;
+          return {
+            ...leaseData,
+            end_date: leaseData.end_date ?? undefined,
+            tenant: tenants ?? undefined,
+            unit: units
+              ? {
+                  ...units,
+                  property: units.properties ?? undefined,
+                }
+              : undefined,
+          };
+        })
+      );
+    }
 
     // Fetch fee types
     const { data: feeTypesData } = await supabase
@@ -346,15 +352,39 @@ export default function GenerateBillingPage() {
   };
 
   const handleGenerateBillings = async () => {
+    console.log("[Billing] handleGenerateBillings started");
+    console.log("[Billing] previewData size:", previewData.size);
+
     setSubmitting(true);
     const supabase = createClient();
     let count = 0;
+    const createdBillingIds: string[] = [];
+
+    // Get the latest billing number for this month to avoid duplicates
+    const monthPrefix = `INV-${billingMonth.replace("-", "")}-`;
+    const { data: latestBilling } = await supabase
+      .from("billings")
+      .select("billing_number")
+      .eq("company_id", companyId)
+      .like("billing_number", `${monthPrefix}%`)
+      .order("billing_number", { ascending: false })
+      .limit(1)
+      .single();
+
+    let startNumber = 1;
+    if (latestBilling?.billing_number) {
+      const lastNumber = parseInt(
+        latestBilling.billing_number.replace(monthPrefix, ""),
+        10
+      );
+      if (!isNaN(lastNumber)) {
+        startNumber = lastNumber + 1;
+      }
+    }
 
     for (const [leaseId, data] of previewData) {
-      // Generate billing number
-      const billingNumber = `INV-${billingMonth.replace("-", "")}-${String(
-        count + 1
-      ).padStart(4, "0")}`;
+      // Generate billing number with unique sequence
+      const billingNumber = `${monthPrefix}${String(startNumber + count).padStart(4, "0")}`;
 
       // Create billing
       const { data: billing, error: billingError } = await supabase
@@ -377,7 +407,11 @@ export default function GenerateBillingPage() {
         .select()
         .single();
 
-      if (billingError || !billing) continue;
+      if (billingError || !billing) {
+        console.error("[Billing] Failed to create billing:", billingError);
+        continue;
+      }
+      console.log("[Billing] Created billing:", billing.id);
 
       // Create billing items
       for (const item of data.items) {
@@ -393,7 +427,64 @@ export default function GenerateBillingPage() {
         });
       }
 
+      createdBillingIds.push(billing.id);
       count++;
+    }
+
+    console.log("[Billing] Total created billings:", createdBillingIds.length);
+
+    // Send billing issued notifications
+    if (createdBillingIds.length > 0) {
+      try {
+        console.log("[Notification] Sending billing issued notifications...");
+        console.log("[Notification] Billing IDs:", createdBillingIds);
+        console.log("[Notification] Tenant count:", previewData.size);
+
+        const response = await fetch("/api/notifications/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "billing_issued",
+            channels: ["email"],
+            recipient_ids: Array.from(previewData.values()).map(
+              (d) => d.lease.tenant_id
+            ),
+            template_data: {
+              billing_month: billingMonth,
+              due_date: dueDate,
+            },
+            skip_duplicate_check: skipDuplicateCheck,
+          }),
+        });
+
+        const result = await response.json();
+        console.log("[Notification] Response:", result);
+
+        if (result.success) {
+          setEmailSentCount(result.queued || 0);
+          console.log(`[Notification] Successfully queued ${result.queued} emails`);
+
+          // 開発環境: キューを即座に処理
+          if (result.queued > 0 && process.env.NODE_ENV === "development") {
+            console.log("[Notification] Processing queue immediately (dev mode)...");
+            try {
+              const processResponse = await fetch("/api/notifications/process-now", {
+                method: "POST",
+              });
+              const processResult = await processResponse.json();
+              console.log("[Notification] Queue processed:", processResult);
+            } catch (processError) {
+              console.error("[Notification] Failed to process queue:", processError);
+            }
+          }
+        } else {
+          setEmailError(result.error || "Unknown error");
+          console.error("[Notification] Failed:", result.error);
+        }
+      } catch (error) {
+        console.error("[Notification] Failed to send billing notifications:", error);
+        setEmailError(error instanceof Error ? error.message : "Network error");
+      }
     }
 
     setGeneratedCount(count);
@@ -413,10 +504,20 @@ export default function GenerateBillingPage() {
                 <h2 className="mb-2 text-xl font-semibold">
                   Нэхэмжлэл амжилттай үүслээ
                 </h2>
-                <p className="mb-6 text-gray-600">
+                <p className="mb-2 text-gray-600">
                   {generatedCount} нэхэмжлэл үүсгэгдлээ
                 </p>
-                <Button onClick={() => router.push("/dashboard/billings")}>
+                {emailSentCount > 0 && (
+                  <p className="mb-2 text-sm text-green-600">
+                    {emailSentCount} түрээслэгчид имэйл мэдэгдэл илгээгдлээ
+                  </p>
+                )}
+                {emailError && (
+                  <p className="mb-2 text-sm text-red-600">
+                    Имэйл илгээхэд алдаа: {emailError}
+                  </p>
+                )}
+                <Button onClick={() => router.push("/dashboard/billings")} className="mt-4">
                   Нэхэмжлэлийн жагсаалт руу
                 </Button>
               </div>
@@ -635,6 +736,23 @@ export default function GenerateBillingPage() {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* 開発用: 重複チェックスキップ */}
+                  {process.env.NODE_ENV === "development" && (
+                    <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={skipDuplicateCheck}
+                          onChange={(e) => setSkipDuplicateCheck(e.target.checked)}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-yellow-800">
+                          [DEV] 重複通知チェックをスキップ（24時間以内に同じ通知を送信済みでも再送信）
+                        </span>
+                      </label>
+                    </div>
+                  )}
 
                   <div className="flex justify-between">
                     <Button variant="outline" onClick={() => setStep(2)}>

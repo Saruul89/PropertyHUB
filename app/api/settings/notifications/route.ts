@@ -54,6 +54,9 @@ export async function GET(req: NextRequest) {
                 sms_account_created: true,
                 sender_email: null,
                 sender_name: null,
+                payment_reminder_days_before: 3,
+                billing_issued_template: null,
+                payment_reminder_template: null,
             });
         }
 
@@ -108,6 +111,9 @@ export async function PUT(req: NextRequest) {
                 sms_account_created: body.sms_account_created,
                 sender_email: body.sender_email,
                 sender_name: body.sender_name,
+                payment_reminder_days_before: body.payment_reminder_days_before ?? 3,
+                billing_issued_template: body.billing_issued_template,
+                payment_reminder_template: body.payment_reminder_template,
                 updated_at: new Date().toISOString(),
             }, {
                 onConflict: 'company_id',
