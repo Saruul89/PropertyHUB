@@ -33,7 +33,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   console.log('[DashboardLayout] rendering content');
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-orange-50 to-purple-50">
       <Sidebar />
       <main className="ml-64">{children}</main>
     </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks';
 import { Building2, Users, Home, TrendingUp } from 'lucide-react';
@@ -109,80 +109,93 @@ export default function DashboardPage() {
             <Header title="Хянах самбар" />
             <div className="p-6">
                 {/* Статистик карт */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                     <Link href="/dashboard/properties">
-                        <Card className="cursor-pointer transition-shadow hover:shadow-md">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Үл хөдлөх хөрөнгө</CardTitle>
-                                <Building2 className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">
-                                    {loading ? '-' : stats.propertyCount}
+                        <Card className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1">
+                            <CardContent className="p-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
+                                        <Building2 className="h-7 w-7 text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Үл хөдлөх хөрөнгө</p>
+                                        <p className="text-2xl font-bold">
+                                            {loading ? '-' : stats.propertyCount}
+                                        </p>
+                                    </div>
                                 </div>
-                                <p className="text-xs text-muted-foreground">Бүртгэгдсэн хөрөнгө</p>
                             </CardContent>
                         </Card>
                     </Link>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Өрөөний тоо</CardTitle>
-                            <Home className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {loading ? '-' : stats.unitCount}
+                    <Card className="transition-all hover:shadow-lg hover:-translate-y-1">
+                        <CardContent className="p-6">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500">
+                                    <Home className="h-7 w-7 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Өрөөний тоо</p>
+                                    <p className="text-2xl font-bold">
+                                        {loading ? '-' : stats.unitCount}
+                                    </p>
+                                    <p className="text-xs text-gray-400">
+                                        Сул өрөө {stats.vacantCount}
+                                    </p>
+                                </div>
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                                Сул өрөө {stats.vacantCount}
-                            </p>
                         </CardContent>
                     </Card>
 
                     <Link href="/dashboard/tenants">
-                        <Card className="cursor-pointer transition-shadow hover:shadow-md">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Түрээслэгчид</CardTitle>
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">
-                                    {loading ? '-' : stats.tenantCount}
+                        <Card className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1">
+                            <CardContent className="p-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600">
+                                        <Users className="h-7 w-7 text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Түрээслэгчид</p>
+                                        <p className="text-2xl font-bold">
+                                            {loading ? '-' : stats.tenantCount}
+                                        </p>
+                                    </div>
                                 </div>
-                                <p className="text-xs text-muted-foreground">Идэвхтэй түрээслэгч</p>
                             </CardContent>
                         </Card>
                     </Link>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Эзэмшлийн хувь</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {loading || stats.unitCount === 0
-                                    ? '-'
-                                    : `${Math.round(((stats.unitCount - stats.vacantCount) / stats.unitCount) * 100)}%`}
+                    <Card className="bg-[#1a1a2e] text-white transition-all hover:shadow-lg hover:-translate-y-1">
+                        <CardContent className="p-6">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20">
+                                    <TrendingUp className="h-7 w-7 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-300">Эзэмшлийн хувь</p>
+                                    <p className="text-2xl font-bold">
+                                        {loading || stats.unitCount === 0
+                                            ? '-'
+                                            : `${Math.round(((stats.unitCount - stats.vacantCount) / stats.unitCount) * 100)}%`}
+                                    </p>
+                                </div>
                             </div>
-                            <p className="text-xs text-muted-foreground">Дүүргэлт</p>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* Түргэн үйлдлүүд */}
-                <div className="mt-6">
-                    <h2 className="mb-4 text-lg font-semibold">Түргэн үйлдлүүд</h2>
-                    <div className="grid gap-4 md:grid-cols-3">
+                <div className="mt-8">
+                    <h2 className="mb-4 text-lg font-semibold text-gray-900">Түргэн үйлдлүүд</h2>
+                    <div className="grid gap-6 md:grid-cols-3">
                         <Link href="/dashboard/properties/new">
-                            <Card className="cursor-pointer transition-shadow hover:shadow-md">
+                            <Card className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1">
                                 <CardContent className="flex items-center gap-4 p-6">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                                        <Building2 className="h-6 w-6 text-blue-600" />
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
+                                        <Building2 className="h-7 w-7 text-white" />
                                     </div>
                                     <div>
-                                        <h3 className="font-medium">Хөрөнгө нэмэх</h3>
+                                        <h3 className="font-semibold text-gray-900">Хөрөнгө нэмэх</h3>
                                         <p className="text-sm text-gray-500">
                                             Шинэ хөрөнгө бүртгэх
                                         </p>
@@ -192,13 +205,13 @@ export default function DashboardPage() {
                         </Link>
 
                         <Link href="/dashboard/tenants/new">
-                            <Card className="cursor-pointer transition-shadow hover:shadow-md">
+                            <Card className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1">
                                 <CardContent className="flex items-center gap-4 p-6">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                                        <Users className="h-6 w-6 text-green-600" />
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600">
+                                        <Users className="h-7 w-7 text-white" />
                                     </div>
                                     <div>
-                                        <h3 className="font-medium">Түрээслэгч нэмэх</h3>
+                                        <h3 className="font-semibold text-gray-900">Түрээслэгч нэмэх</h3>
                                         <p className="text-sm text-gray-500">
                                             Шинэ түрээслэгч бүртгэх
                                         </p>
@@ -208,13 +221,13 @@ export default function DashboardPage() {
                         </Link>
 
                         <Link href="/dashboard/properties">
-                            <Card className="cursor-pointer transition-shadow hover:shadow-md">
+                            <Card className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1">
                                 <CardContent className="flex items-center gap-4 p-6">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-                                        <Home className="h-6 w-6 text-purple-600" />
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-amber-500">
+                                        <Home className="h-7 w-7 text-white" />
                                     </div>
                                     <div>
-                                        <h3 className="font-medium">Өрөө удирдах</h3>
+                                        <h3 className="font-semibold text-gray-900">Өрөө удирдах</h3>
                                         <p className="text-sm text-gray-500">
                                             Хөрөнгийн өрөөг удирдах
                                         </p>

@@ -7,6 +7,13 @@ import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { createClient } from '@/lib/supabase/client';
 import { Lease, Tenant, Unit, Property } from '@/types';
 import {
@@ -18,6 +25,8 @@ import {
     CheckCircle,
     Clock,
     XCircle,
+    Trash2,
+    X,
 } from 'lucide-react';
 
 interface LeaseWithRelations extends Lease {
@@ -35,13 +44,15 @@ const statusConfig = {
 export default function LeasesPage() {
     const router = useRouter();
     const [leases, setLeases] = useState<LeaseWithRelations[]>([]);
+    const [properties, setProperties] = useState<Property[]>([]);
     const [filteredLeases, setFilteredLeases] = useState<LeaseWithRelations[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [propertyFilter, setPropertyFilter] = useState<string>('all');
 
     useEffect(() => {
-        fetchLeases();
+        fetchData();
     }, []);
 
     useEffect(() => {
@@ -57,6 +68,11 @@ export default function LeasesPage() {
             );
         }
 
+        // Property filter
+        if (propertyFilter !== 'all') {
+            filtered = filtered.filter((lease) => lease.unit.property.id === propertyFilter);
+        }
+
         if (statusFilter === 'expiring_soon') {
             filtered = filtered.filter((lease) => {
                 const days = getDaysUntilExpiry(lease.end_date);
@@ -67,9 +83,9 @@ export default function LeasesPage() {
         }
 
         setFilteredLeases(filtered);
-    }, [search, statusFilter, leases]);
+    }, [search, statusFilter, propertyFilter, leases]);
 
-    const fetchLeases = async () => {
+    const fetchData = async () => {
         const supabase = createClient();
         const { data: user } = await supabase.auth.getUser();
         if (!user.user) return;
@@ -82,19 +98,53 @@ export default function LeasesPage() {
 
         if (!companyUser) return;
 
-        const { data } = await supabase
-            .from('leases')
-            .select(`
-                *,
-                tenant:tenants(*),
-                unit:units(*, property:properties(*))
-            `)
-            .eq('company_id', companyUser.company_id)
-            .order('created_at', { ascending: false });
+        // Fetch properties and leases in parallel
+        const [propertiesResult, leasesResult] = await Promise.all([
+            supabase
+                .from('properties')
+                .select('id, name')
+                .eq('company_id', companyUser.company_id)
+                .eq('is_active', true)
+                .order('name'),
+            supabase
+                .from('leases')
+                .select(`
+                    *,
+                    tenant:tenants(*),
+                    unit:units(*, property:properties(*))
+                `)
+                .eq('company_id', companyUser.company_id)
+                .order('created_at', { ascending: false }),
+        ]);
 
-        setLeases((data as LeaseWithRelations[]) || []);
-        setFilteredLeases((data as LeaseWithRelations[]) || []);
+        if (propertiesResult.data) {
+            setProperties(propertiesResult.data as Property[]);
+        }
+
+        setLeases((leasesResult.data as LeaseWithRelations[]) || []);
+        setFilteredLeases((leasesResult.data as LeaseWithRelations[]) || []);
         setLoading(false);
+    };
+
+    const handleDelete = async (leaseId: string, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!confirm('Энэ гэрээг устгахдаа итгэлтэй байна у|?')) return;
+
+        const supabase = createClient();
+        const { error } = await supabase.from('leases').delete().eq('id', leaseId);
+
+        if (!error) {
+            setLeases((prev) => prev.filter((l) => l.id !== leaseId));
+        }
+    };
+
+    const hasActiveFilters = propertyFilter !== 'all';
+
+    const clearFilters = () => {
+        setPropertyFilter('all');
+        setStatusFilter('all');
     };
 
     const formatDate = (dateString: string) => {
@@ -137,17 +187,41 @@ export default function LeasesPage() {
             />
             <div className="p-6">
                 {/* Filters */}
-                <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                        <Input
-                            placeholder="Оршин суугч, өрөөний дугаар, барилгын нэрээр хайх..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10"
-                        />
+                <div className="mb-6 flex flex-col gap-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <Input
+                                placeholder="Оршин суугч, өрөөний дугаар, барилгын нэрээр хайх..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="pl-10"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-gray-500" />
+                            <Select value={propertyFilter} onValueChange={setPropertyFilter}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Бүх барилга" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Бүх барилга</SelectItem>
+                                    {properties.map((property) => (
+                                        <SelectItem key={property.id} value={property.id}>
+                                            {property.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {hasActiveFilters && (
+                                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-gray-500">
+                                    <X className="mr-1 h-4 w-4" />
+                                    Цэвэрлэх
+                                </Button>
+                            )}
+                        </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         {['all', 'active', 'pending', 'expiring_soon', 'expired', 'terminated'].map((status) => (
                             <Button
                                 key={status}
@@ -163,6 +237,9 @@ export default function LeasesPage() {
                                         : statusConfig[status as keyof typeof statusConfig].label}
                             </Button>
                         ))}
+                        <span className="ml-auto text-sm text-gray-500">
+                            {filteredLeases.length} / {leases.length} гэрээ
+                        </span>
                     </div>
                 </div>
 
@@ -282,17 +359,27 @@ export default function LeasesPage() {
                                                     </div>
                                                 </div>
 
-                                                <div className="ml-4 text-right">
-                                                    <span
-                                                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${status.bg} ${status.color}`}
-                                                    >
-                                                        {status.label}
-                                                    </span>
+                                                <div className="ml-4 flex flex-col items-end gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span
+                                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${status.bg} ${status.color}`}
+                                                        >
+                                                            {status.label}
+                                                        </span>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={(e) => handleDelete(lease.id, e)}
+                                                            className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                     {daysUntilExpiry !== null &&
                                                         daysUntilExpiry <= 30 &&
                                                         daysUntilExpiry > 0 &&
                                                         lease.status === 'active' && (
-                                                            <div className="mt-2 text-xs text-orange-600">
+                                                            <div className="text-xs text-orange-600">
                                                                 {daysUntilExpiry} хоногт дуусна
                                                             </div>
                                                         )}

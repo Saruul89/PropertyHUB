@@ -16,6 +16,7 @@ import {
     LogOut,
     Map,
     FileText,
+    User,
 } from 'lucide-react';
 import { useAuth } from '@/hooks';
 import { Button } from '@/components/ui/button';
@@ -61,18 +62,42 @@ export function Sidebar() {
     });
 
     return (
-        <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-white">
-            <div className="flex h-full flex-col">
+        <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#1a1a2e]">
+            {/* Wave decoration */}
+            <div className="absolute bottom-0 left-0 right-0 h-48 opacity-10 pointer-events-none">
+                <svg viewBox="0 0 200 200" className="h-full w-full" preserveAspectRatio="none">
+                    <path
+                        d="M0,100 Q50,50 100,100 T200,100"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="1"
+                    />
+                    <path
+                        d="M0,120 Q50,70 100,120 T200,120"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="1"
+                    />
+                    <path
+                        d="M0,140 Q50,90 100,140 T200,140"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="1"
+                    />
+                </svg>
+            </div>
+
+            <div className="relative flex h-full flex-col">
                 {/* Logo */}
-                <div className="flex h-16 items-center border-b px-6">
+                <div className="flex h-16 items-center px-6">
                     <Link href="/dashboard" className="flex items-center gap-2">
-                        <Building2 className="h-6 w-6 text-blue-600" />
-                        <span className="text-xl font-bold">PropertyHub</span>
+                        <Building2 className="h-6 w-6 text-violet-500" />
+                        <span className="text-xl font-bold text-white">PropertyHub</span>
                     </Link>
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 space-y-1 p-4">
+                <nav className="flex-1 space-y-1 px-3 py-4">
                     {filteredItems.map((item) => {
                         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                         const Icon = item.icon;
@@ -82,10 +107,10 @@ export function Sidebar() {
                                 key={item.href}
                                 href={item.href}
                                 className={cn(
-                                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                                    'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all',
                                     isActive
-                                        ? 'bg-blue-50 text-blue-600'
-                                        : 'text-gray-700 hover:bg-gray-100'
+                                        ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/30'
+                                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
                                 )}
                             >
                                 <Icon className="h-5 w-5" />
@@ -95,16 +120,34 @@ export function Sidebar() {
                     })}
                 </nav>
 
-                {/* Logout */}
-                <div className="border-t p-4">
-                    <Button
-                        variant="ghost"
-                        className="w-full justify-start gap-3 text-gray-700"
-                        onClick={signOut}
-                    >
-                        <LogOut className="h-5 w-5" />
-                        Гарах
-                    </Button>
+                {/* Footer */}
+                <div className="border-t border-white/10 p-4">
+                    <div className="flex items-center justify-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-gray-400 hover:text-white hover:bg-white/10"
+                        >
+                            <User className="h-5 w-5" />
+                        </Button>
+                        <Link href="/dashboard/settings">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-gray-400 hover:text-white hover:bg-white/10"
+                            >
+                                <Settings className="h-5 w-5" />
+                            </Button>
+                        </Link>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={signOut}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        >
+                            <LogOut className="h-5 w-5" />
+                        </Button>
+                    </div>
                 </div>
             </div>
         </aside>
