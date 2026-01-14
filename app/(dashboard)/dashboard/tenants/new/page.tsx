@@ -2,17 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks';
-import { Property, Unit } from '@/types';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import type { Property, Unit } from '@/types';
 import { CheckCircle, Copy } from 'lucide-react';
 
 const tenantSchema = z.object({
@@ -44,6 +53,7 @@ export default function NewTenantPage() {
         register,
         handleSubmit,
         watch,
+        control,
         formState: { errors },
     } = useForm<TenantFormData>({
         resolver: zodResolver(tenantSchema),
@@ -158,14 +168,14 @@ export default function NewTenantPage() {
                                     <p className="mb-2 text-sm text-gray-600">Нэвтрэх мэдээлэл</p>
                                     <div className="space-y-2">
                                         <div>
-                                            <span className="text-sm text-gray-500">Утас：</span>
+                                            <span className="text-sm text-gray-500">Утас:</span>
                                             <span className="ml-2 font-mono font-medium">
                                                 {success.phone}
                                             </span>
                                         </div>
                                         <div>
                                             <span className="text-sm text-gray-500">
-                                                Анхны нууц үг：
+                                                Анхны нууц үг:
                                             </span>
                                             <span className="ml-2 font-mono font-medium">
                                                 {success.password}
@@ -217,24 +227,30 @@ export default function NewTenantPage() {
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                             <div>
                                 <Label>Оршин суугчийн төрөл</Label>
-                                <div className="mt-2 flex gap-4">
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            value="individual"
-                                            {...register('tenant_type')}
-                                        />
-                                        Хувь хүн
-                                    </label>
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            value="company"
-                                            {...register('tenant_type')}
-                                        />
-                                        Компани
-                                    </label>
-                                </div>
+                                <Controller
+                                    name="tenant_type"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <RadioGroup
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                            className="mt-2 flex gap-4"
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="individual" id="individual" />
+                                                <Label htmlFor="individual" className="font-normal cursor-pointer">
+                                                    Хувь хүн
+                                                </Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="company" id="company" />
+                                                <Label htmlFor="company" className="font-normal cursor-pointer">
+                                                    Компани
+                                                </Label>
+                                            </div>
+                                        </RadioGroup>
+                                    )}
+                                />
                             </div>
 
                             <div>
@@ -274,34 +290,44 @@ export default function NewTenantPage() {
                             <div className="border-t pt-4">
                                 <Label>Өрөө хуваарилах (сонголтоор)</Label>
                                 <div className="mt-2 grid grid-cols-2 gap-4">
-                                    <div>
-                                        <select
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            value={selectedPropertyId}
-                                            onChange={(e) => setSelectedPropertyId(e.target.value)}
-                                        >
-                                            <option value="">Барилга сонгох</option>
+                                    <Select
+                                        value={selectedPropertyId}
+                                        onValueChange={setSelectedPropertyId}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Барилга сонгох" />
+                                        </SelectTrigger>
+                                        <SelectContent>
                                             {properties.map((property) => (
-                                                <option key={property.id} value={property.id}>
+                                                <SelectItem key={property.id} value={property.id}>
                                                     {property.name}
-                                                </option>
+                                                </SelectItem>
                                             ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <select
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            {...register('unit_id')}
-                                            disabled={!selectedPropertyId}
-                                        >
-                                            <option value="">Өрөө сонгох</option>
-                                            {units.map((unit) => (
-                                                <option key={unit.id} value={unit.id}>
-                                                    {unit.unit_number}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                        </SelectContent>
+                                    </Select>
+
+                                    <Controller
+                                        name="unit_id"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select
+                                                value={field.value || ''}
+                                                onValueChange={field.onChange}
+                                                disabled={!selectedPropertyId}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Өрөө сонгох" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {units.map((unit) => (
+                                                        <SelectItem key={unit.id} value={unit.id}>
+                                                            {unit.unit_number}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
                                 </div>
                                 {selectedPropertyId && units.length === 0 && (
                                     <p className="mt-2 text-sm text-gray-500">
@@ -326,11 +352,7 @@ export default function NewTenantPage() {
 
                             <div>
                                 <Label htmlFor="notes">Тэмдэглэл</Label>
-                                <textarea
-                                    id="notes"
-                                    {...register('notes')}
-                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                />
+                                <Textarea id="notes" {...register('notes')} />
                             </div>
 
                             <div className="flex gap-4 pt-4">

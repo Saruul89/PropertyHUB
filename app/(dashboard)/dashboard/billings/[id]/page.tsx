@@ -26,6 +26,9 @@ import {
   X,
   CheckCircle,
   Printer,
+  Clock,
+  Check,
+  XCircle,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -63,6 +66,8 @@ export default function BillingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingPayments, setPendingPayments] = useState<Payment[]>([]);
+  const [approvingPaymentId, setApprovingPaymentId] = useState<string | null>(null);
 
   const {
     register,
@@ -121,15 +126,28 @@ export default function BillingDetailPage() {
       setBillingItems(itemsData);
     }
 
-    // Fetch payments
+    // Fetch completed payments
     const { data: paymentsData } = await supabase
       .from("payments")
       .select("*")
       .eq("billing_id", billingId)
+      .eq("status", "completed")
       .order("payment_date", { ascending: false });
 
     if (paymentsData) {
       setPayments(paymentsData);
+    }
+
+    // Fetch pending payments (payment claims from tenants)
+    const { data: pendingData } = await supabase
+      .from("payments")
+      .select("*")
+      .eq("billing_id", billingId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    if (pendingData) {
+      setPendingPayments(pendingData);
     }
 
     setLoading(false);
@@ -209,6 +227,75 @@ export default function BillingDetailPage() {
       payment_date: new Date().toISOString().split("T")[0],
     });
     setShowPaymentForm(true);
+  };
+
+  const approvePaymentClaim = async (payment: Payment) => {
+    if (!billing) return;
+    setApprovingPaymentId(payment.id);
+
+    const supabase = createClient();
+
+    // Update payment status to completed
+    const { error: paymentError } = await supabase
+      .from("payments")
+      .update({ status: "completed" })
+      .eq("id", payment.id);
+
+    if (paymentError) {
+      alert("Алдаа гарлаа");
+      setApprovingPaymentId(null);
+      return;
+    }
+
+    // Update billing status and paid_amount
+    const newPaidAmount = billing.paid_amount + payment.amount;
+    let newStatus: Billing["status"] = billing.status;
+
+    if (newPaidAmount >= billing.total_amount) {
+      newStatus = "paid";
+    } else if (newPaidAmount > 0) {
+      newStatus = "partial";
+    }
+
+    const { error: updateError } = await supabase
+      .from("billings")
+      .update({
+        paid_amount: newPaidAmount,
+        status: newStatus,
+        paid_at: newStatus === "paid" ? new Date().toISOString() : null,
+      })
+      .eq("id", billingId);
+
+    if (!updateError) {
+      setBilling({
+        ...billing,
+        paid_amount: newPaidAmount,
+        status: newStatus,
+        paid_at: newStatus === "paid" ? new Date().toISOString() : billing.paid_at,
+      });
+      setPayments([{ ...payment, status: "completed" }, ...payments]);
+      setPendingPayments(pendingPayments.filter((p) => p.id !== payment.id));
+    }
+
+    setApprovingPaymentId(null);
+  };
+
+  const rejectPaymentClaim = async (paymentId: string) => {
+    if (!confirm("Төлбөрийн мэдэгдлийг татгалзах уу?")) return;
+    setApprovingPaymentId(paymentId);
+
+    const supabase = createClient();
+
+    const { error } = await supabase
+      .from("payments")
+      .update({ status: "rejected" })
+      .eq("id", paymentId);
+
+    if (!error) {
+      setPendingPayments(pendingPayments.filter((p) => p.id !== paymentId));
+    }
+
+    setApprovingPaymentId(null);
   };
 
   if (loading) {
@@ -408,6 +495,62 @@ export default function BillingDetailPage() {
               </table>
             </CardContent>
           </Card>
+
+          {/* Pending Payment Claims */}
+          {pendingPayments.length > 0 && (
+            <Card className="border-amber-200 bg-amber-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-amber-700">
+                  <Clock className="h-4 w-4" />
+                  Баталгаажуулах төлбөр ({pendingPayments.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {pendingPayments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between rounded-lg border border-amber-200 bg-white p-4"
+                    >
+                      <div>
+                        <p className="font-medium text-amber-800">
+                          ₮{payment.amount.toLocaleString()}
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-amber-600">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(payment.payment_date).toLocaleDateString("mn-MN")}
+                        </div>
+                        {payment.notes && (
+                          <p className="mt-1 text-sm text-gray-500">{payment.notes}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                          onClick={() => approvePaymentClaim(payment)}
+                          disabled={approvingPaymentId === payment.id}
+                        >
+                          <Check className="mr-1 h-4 w-4" />
+                          {approvingPaymentId === payment.id ? "..." : "Батлах"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-red-200 text-red-600 hover:bg-red-50"
+                          onClick={() => rejectPaymentClaim(payment.id)}
+                          disabled={approvingPaymentId === payment.id}
+                        >
+                          <XCircle className="mr-1 h-4 w-4" />
+                          Татгалзах
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Payment History */}
           <Card>

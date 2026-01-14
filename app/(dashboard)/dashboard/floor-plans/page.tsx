@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/select";
 import { LinearFloorPlan } from "@/components/features/floor-plan/LinearFloorPlan";
 import { useCompany, useFloorPlanProperties, useFloorPlanData } from "@/hooks";
-import { Building2, Map, Layers, LayoutList, Pencil, Home, Building2Icon, Layers2 } from "lucide-react";
+import { Building2, Map, LayoutList, Pencil, Home, Layers2 } from "lucide-react";
+import { FloorPlansSkeleton, FloorPlanContentSkeleton } from "@/components/skeletons";
 
 type ViewType = "list" | "linear";
 
@@ -66,41 +67,31 @@ export default function FloorPlansPage() {
 
   const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
 
-  const isLoading =
-    propertiesLoading || (selectedPropertyId && floorDataLoading);
-
   if (propertiesLoading) {
-    return (
-      <>
-        <Header title="Давхрын зураг" />
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-gray-500">Ачааллаж байна...</div>
-        </div>
-      </>
-    );
+    return <FloorPlansSkeleton />;
   }
 
   return (
     <>
       <Header title="Давхрын зураг" />
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-6">
         {/* Header Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
             {/* Property Selector */}
             {floorPlanEnabledProperties.length > 0 && (
               <Select
                 value={selectedPropertyId || ""}
                 onValueChange={(value) => {
                   setSelectedPropertyId(value);
-                  setSelectedFloorId(null); // フロア選択をリセット
+                  setSelectedFloorId(null);
                   if (viewType === "list") {
                     setViewType("linear");
                   }
                 }}
               >
-                <SelectTrigger className="w-[280px]">
-                  <Building2 className="h-4 w-4 mr-2" />
+                <SelectTrigger className="w-full sm:w-[280px]">
+                  <Building2 className="h-4 w-4 mr-2 flex-shrink-0" />
                   <SelectValue placeholder="Барилга сонгох" />
                 </SelectTrigger>
                 <SelectContent>
@@ -115,7 +106,7 @@ export default function FloorPlansPage() {
           </div>
 
           {/* View Toggle */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
             <div className="flex gap-1 rounded-lg border p-1">
               <Button
                 size="sm"
@@ -127,7 +118,7 @@ export default function FloorPlansPage() {
                 className="gap-2"
               >
                 <Home className="h-4 w-4" />
-                Жагсаалт
+                <span className="hidden sm:inline">Жагсаалт</span>
               </Button>
               {selectedPropertyId && (
                 <Button
@@ -137,16 +128,16 @@ export default function FloorPlansPage() {
                   className="gap-2"
                 >
                   <LayoutList className="h-4 w-4" />
-                  Нэг мөрөнд
+                  <span className="hidden sm:inline">Нэг мөрөнд</span>
                 </Button>
               )}
             </div>
 
             {selectedPropertyId && (
               <Link href={`/dashboard/floor-plans/${selectedPropertyId}`}>
-                <Button variant="outline" size="sm">
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Давхарын зураг
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Pencil className="h-4 w-4" />
+                  <span className="hidden sm:inline">Давхарын зураг</span>
                 </Button>
               </Link>
             )}
@@ -169,12 +160,12 @@ export default function FloorPlansPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {properties.map((property) => (
                 <Card
                   key={property.id}
-                  className={`cursor-pointer transition-shadow hover:shadow-md ${
-                    !property.floor_plan_enabled ? "opacity-60" : ""
+                  className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
+                    !property.floor_plan_enabled ? "opacity-60 grayscale" : ""
                   }`}
                   onClick={() => {
                     if (property.floor_plan_enabled) {
@@ -238,10 +229,7 @@ export default function FloorPlansPage() {
             </div>
           )
         ) : floorDataLoading ? (
-          // Loading floor data
-          <div className="flex h-64 items-center justify-center">
-            <div className="text-gray-500">Ачааллаж байна...</div>
-          </div>
+          <FloorPlanContentSkeleton />
         ) : selectedPropertyId && floors.length === 0 ? (
           // No floors configured
           <Card>

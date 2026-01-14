@@ -36,12 +36,10 @@ export async function GET(req: NextRequest) {
 
         const offset = (page - 1) * limit;
 
+        // Query notifications_queue without JOIN (no FK relationship)
         let query = supabase
             .from('notifications_queue')
-            .select(`
-                *,
-                tenants:recipient_id(id, name, email, phone)
-            `, { count: 'exact' })
+            .select('*', { count: 'exact' })
             .eq('company_id', companyUser.company_id)
             .order('created_at', { ascending: false })
             .range(offset, offset + limit - 1);
@@ -67,7 +65,7 @@ export async function GET(req: NextRequest) {
             query = query.lte('created_at', endDate);
         }
 
-        const { data, error, count } = await query;
+        const { data: notifications, error, count } = await query;
 
         if (error) {
             console.error('Failed to fetch notification history:', error);
@@ -76,6 +74,35 @@ export async function GET(req: NextRequest) {
                 { status: 500 }
             );
         }
+
+        // Fetch tenant info separately for tenant recipients
+        const tenantIds = [...new Set(
+            (notifications || [])
+                .filter(n => n.recipient_type === 'tenant')
+                .map(n => n.recipient_id)
+        )];
+
+        let tenantsMap: Record<string, { id: string; name: string; email?: string; phone: string }> = {};
+
+        if (tenantIds.length > 0) {
+            const { data: tenants } = await supabase
+                .from('tenants')
+                .select('id, name, email, phone')
+                .in('id', tenantIds);
+
+            if (tenants) {
+                tenantsMap = tenants.reduce((acc, t) => {
+                    acc[t.id] = t;
+                    return acc;
+                }, {} as typeof tenantsMap);
+            }
+        }
+
+        // Combine data
+        const data = (notifications || []).map(n => ({
+            ...n,
+            tenants: n.recipient_type === 'tenant' ? tenantsMap[n.recipient_id] || null : null,
+        }));
 
         return NextResponse.json({
             data,

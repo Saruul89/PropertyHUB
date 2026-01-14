@@ -10,7 +10,6 @@ import { useTenant } from '@/hooks';
 import { FeeType, TenantMeterSubmission, MeterReading, MeterSubmissionStatus } from '@/types';
 import {
     Gauge,
-    Camera,
     Send,
     CheckCircle,
     Clock,
@@ -150,31 +149,40 @@ export default function TenantMeterSubmitPage() {
         setSubmitting(true);
         setError('');
 
-        const supabase = createClient();
+        try {
+            const response = await fetch('/api/tenant/meter-submissions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fee_type_id: selectedType.id,
+                    submitted_reading: value,
+                    notes: notes || null,
+                }),
+            });
 
-        const { error: insertError } = await supabase.from('tenant_meter_submissions').insert({
-            tenant_id: tenant?.id,
-            unit_id: lease?.unit_id,
-            fee_type_id: selectedType.id,
-            submitted_reading: value,
-            notes: notes || null,
-        });
+            const data = await response.json();
 
-        setSubmitting(false);
+            setSubmitting(false);
 
-        if (insertError) {
-            setError('Илгээхэд алдаа гарлаа: ' + insertError.message);
-        } else {
-            setSuccess(true);
-            setReadingValue('');
-            setNotes('');
-            fetchMeterTypes();
-            fetchRecentSubmissions();
-            setTimeout(() => {
-                setSelectedType(null);
-                setSuccess(false);
-            }, 2000);
+            if (!response.ok) {
+                setError('Илгээхэд алдаа гарлаа: ' + (data.error || 'Unknown error'));
+                return;
+            }
+        } catch {
+            setSubmitting(false);
+            setError('Илгээхэд алдаа гарлаа');
+            return;
         }
+
+        setSuccess(true);
+        setReadingValue('');
+        setNotes('');
+        fetchMeterTypes();
+        fetchRecentSubmissions();
+        setTimeout(() => {
+            setSelectedType(null);
+            setSuccess(false);
+        }, 2000);
     };
 
     if (tenantLoading || loading) {

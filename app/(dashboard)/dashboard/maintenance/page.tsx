@@ -23,6 +23,7 @@ import {
     User,
     Phone,
 } from 'lucide-react';
+import { MaintenanceSkeleton } from '@/components/skeletons';
 
 interface MaintenanceWithRelations extends MaintenanceRequest {
     unit: Unit & { property: Property };
@@ -124,14 +125,7 @@ export default function MaintenancePage() {
     };
 
     if (loading) {
-        return (
-            <>
-                <Header title="Засвар үйлчилгээ" />
-                <div className="flex h-64 items-center justify-center">
-                    <div className="text-gray-500">Ачааллаж байна...</div>
-                </div>
-            </>
-        );
+        return <MaintenanceSkeleton />;
     }
 
     return (

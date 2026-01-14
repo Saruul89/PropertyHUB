@@ -1,138 +1,66 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Header } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks';
 import {
+  useBillingSummary,
+  useMonthlyReport,
+  getCurrentMonth,
+  formatMonth,
+  navigateMonth,
+} from '@/hooks/queries';
+import {
   BarChart3,
   TrendingUp,
+  TrendingDown,
   AlertCircle,
   Wallet,
   Building2,
   ChevronLeft,
   ChevronRight,
+  Download,
+  RefreshCw,
+  Calendar,
+  Percent,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   MonthlyRevenueChart,
   BillingStatusChart,
   PropertyReportTable,
   OverdueTenantsTable,
 } from '@/components/features/reports';
+import { ChartSkeleton, TableSkeleton } from '@/components/skeletons';
 
-type BillingSummary = {
-  total_billed: number;
-  total_paid: number;
-  total_outstanding: number;
-  overdue_count: number;
-  overdue_amount: number;
-  pending_count: number;
-  partial_count: number;
-  paid_count: number;
-  cancelled_count: number;
-  collection_rate: number;
-  month: string;
+const getCollectionRateColor = (rate: number): string => {
+  if (rate >= 80) return 'text-green-600';
+  if (rate >= 50) return 'text-amber-600';
+  return 'text-red-600';
 };
 
-type PropertyStats = {
-  property_id: string;
-  property_name: string;
-  total_billed: number;
-  total_paid: number;
-  billing_count: number;
-  paid_count: number;
-  unpaid_count: number;
-  overdue_count: number;
-};
-
-type FeeTypeStats = {
-  fee_name: string;
-  total_amount: number;
-  count: number;
-};
-
-type OverdueTenant = {
-  tenant_name: string;
-  unit_number: string;
-  property_name: string;
-  total_amount: number;
-  paid_amount: number;
-  outstanding: number;
-  due_date: string;
-};
-
-type MonthlyReport = {
-  month: string;
-  summary: {
-    total_billed: number;
-    total_paid: number;
-    total_outstanding: number;
-    collection_rate: number;
-  };
-  by_property: PropertyStats[];
-  by_fee_type: FeeTypeStats[];
-  overdue_tenants: OverdueTenant[];
-};
-
-const getCurrentMonth = (): string => {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-};
-
-const formatMonth = (monthStr: string): string => {
-  const [year, month] = monthStr.split('-');
-  const monthNames = [
-    '1-р сар', '2-р сар', '3-р сар', '4-р сар', '5-р сар', '6-р сар',
-    '7-р сар', '8-р сар', '9-р сар', '10-р сар', '11-р сар', '12-р сар',
-  ];
-  return `${year} оны ${monthNames[parseInt(month) - 1]}`;
-};
-
-const navigateMonth = (currentMonth: string, direction: 'prev' | 'next'): string => {
-  const [year, month] = currentMonth.split('-').map(Number);
-  const date = new Date(year, month - 1 + (direction === 'next' ? 1 : -1), 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+const getCollectionRateBgColor = (rate: number): string => {
+  if (rate >= 80) return 'bg-green-50 border-green-200';
+  if (rate >= 50) return 'bg-amber-50 border-amber-200';
+  return 'bg-red-50 border-red-200';
 };
 
 export default function ReportsPage() {
   const { companyId } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
-  const [summary, setSummary] = useState<BillingSummary | null>(null);
-  const [monthlyReport, setMonthlyReport] = useState<MonthlyReport | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('revenue');
 
-  useEffect(() => {
-    if (!companyId) return;
+  const { data: summary, isLoading: summaryLoading, refetch: refetchSummary } = useBillingSummary(companyId, selectedMonth);
+  const { data: monthlyReport, isLoading: reportLoading, refetch: refetchReport } = useMonthlyReport(companyId, selectedMonth);
 
-    const fetchReports = async () => {
-      setLoading(true);
-      try {
-        const [summaryRes, monthlyRes] = await Promise.all([
-          fetch(`/api/reports/billing/summary?month=${selectedMonth}`),
-          fetch(`/api/reports/billing/monthly?month=${selectedMonth}`),
-        ]);
+  // Get previous month data for comparison
+  const previousMonth = navigateMonth(selectedMonth, 'prev');
+  const { data: prevSummary } = useBillingSummary(companyId, previousMonth);
 
-        if (summaryRes.ok) {
-          const summaryData = await summaryRes.json();
-          setSummary(summaryData.data);
-        }
-
-        if (monthlyRes.ok) {
-          const monthlyData = await monthlyRes.json();
-          setMonthlyReport(monthlyData.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch reports:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReports();
-  }, [companyId, selectedMonth]);
+  const loading = summaryLoading || reportLoading;
 
   const handlePrevMonth = () => {
     setSelectedMonth(navigateMonth(selectedMonth, 'prev'));
@@ -145,129 +73,307 @@ export default function ReportsPage() {
     }
   };
 
+  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value && value <= getCurrentMonth()) {
+      setSelectedMonth(value);
+    }
+  };
+
+  const handleRefresh = () => {
+    refetchSummary();
+    refetchReport();
+  };
+
   const isCurrentMonth = selectedMonth === getCurrentMonth();
 
-  return (
-    <div className="space-y-6">
-      <Header title="Тайлан" />
+  // Calculate trends compared to previous month
+  const trends = useMemo(() => {
+    if (!summary || !prevSummary) return null;
 
-      <div className="px-4 md:px-6">
-        {/* Month Selector */}
-        <div className="mb-6 flex items-center justify-between">
+    const billedDiff = summary.total_billed - (prevSummary.total_billed || 0);
+    const paidDiff = summary.total_paid - (prevSummary.total_paid || 0);
+    const rateDiff = (summary.collection_rate || 0) - (prevSummary.collection_rate || 0);
+
+    return {
+      billed: { value: billedDiff, isUp: billedDiff >= 0 },
+      paid: { value: paidDiff, isUp: paidDiff >= 0 },
+      rate: { value: rateDiff, isUp: rateDiff >= 0 },
+    };
+  }, [summary, prevSummary]);
+
+  // Export all reports as CSV
+  const handleExportAll = () => {
+    const summaryData = [
+      ['Тайлангийн хураангуй', formatMonth(selectedMonth)],
+      [''],
+      ['Нийт нэхэмжлэл', `₮${(summary?.total_billed || 0).toLocaleString()}`],
+      ['Төлөгдсөн', `₮${(summary?.total_paid || 0).toLocaleString()}`],
+      ['Үлдэгдэл', `₮${(summary?.total_outstanding || 0).toLocaleString()}`],
+      ['Цуглуулалтын хувь', `${(summary?.collection_rate || 0).toFixed(1)}%`],
+      [''],
+      ['Нэхэмжлэлийн тоо', summary?.pending_count || 0],
+      ['Төлөгдсөн тоо', summary?.paid_count || 0],
+      ['Хугацаа хэтэрсэн', summary?.overdue_count || 0],
+    ];
+
+    const csvContent = summaryData.map(row => row.join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `report-summary-${selectedMonth}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const collectionRate = summary?.collection_rate || 0;
+
+  return (
+    <>
+      <Header
+        title="Тайлан"
+        action={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Шинэчлэх</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportAll} disabled={loading}>
+              <Download className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Татах</span>
+            </Button>
+          </div>
+        }
+      />
+
+      <div className="p-6 space-y-6">
+        {/* Month Selector - Improved */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
               onClick={handlePrevMonth}
+              className="shrink-0"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="min-w-40 text-center text-lg font-medium">
-              {formatMonth(selectedMonth)}
-            </span>
+
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="month"
+                value={selectedMonth}
+                onChange={handleMonthChange}
+                max={getCurrentMonth()}
+                className="w-44 pl-10 text-center font-medium"
+              />
+            </div>
+
             <Button
               variant="outline"
               size="icon"
               onClick={handleNextMonth}
               disabled={isCurrentMonth}
+              className="shrink-0"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
+
+            {!isCurrentMonth && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedMonth(getCurrentMonth())}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                Энэ сар
+              </Button>
+            )}
           </div>
+
+          <p className="text-sm text-muted-foreground">
+            Сүүлд шинэчлэгдсэн: {new Date().toLocaleTimeString('mn-MN')}
+          </p>
         </div>
 
-        {/* Summary Stats Cards */}
-        <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Summary Stats Cards - Redesigned */}
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          {/* Total Billed */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Нийт нэхэмжлэл</CardTitle>
-              <Wallet className="h-4 w-4 text-blue-600" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Нийт нэхэмжлэл
+              </CardTitle>
+              <div className="rounded-full bg-blue-100 p-2">
+                <Wallet className="h-4 w-4 text-blue-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {loading ? '-' : `₮${(summary?.total_billed || 0).toLocaleString()}`}
+              <div className="text-xl font-bold sm:text-2xl">
+                {loading ? (
+                  <div className="h-8 w-24 animate-pulse rounded bg-gray-200" />
+                ) : (
+                  `₮${(summary?.total_billed || 0).toLocaleString()}`
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {summary?.pending_count || 0} хүлээгдэж буй
-              </p>
+              <div className="mt-1 flex items-center gap-1 text-xs">
+                {trends?.billed && (
+                  <>
+                    {trends.billed.isUp ? (
+                      <TrendingUp className="h-3 w-3 text-green-600" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 text-red-600" />
+                    )}
+                    <span className={trends.billed.isUp ? 'text-green-600' : 'text-red-600'}>
+                      ₮{Math.abs(trends.billed.value).toLocaleString()}
+                    </span>
+                  </>
+                )}
+                <span className="text-muted-foreground">
+                  • {summary?.pending_count || 0} хүлээгдэж буй
+                </span>
+              </div>
             </CardContent>
           </Card>
 
+          {/* Total Paid */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Төлөгдсөн</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Төлөгдсөн
+              </CardTitle>
+              <div className="rounded-full bg-green-100 p-2">
+                <TrendingUp className="h-4 w-4 text-green-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {loading ? '-' : `₮${(summary?.total_paid || 0).toLocaleString()}`}
+              <div className="text-xl font-bold text-green-600 sm:text-2xl">
+                {loading ? (
+                  <div className="h-8 w-24 animate-pulse rounded bg-gray-200" />
+                ) : (
+                  `₮${(summary?.total_paid || 0).toLocaleString()}`
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {summary?.paid_count || 0} төлөгдсөн
-              </p>
+              <div className="mt-1 flex items-center gap-1 text-xs">
+                {trends?.paid && (
+                  <>
+                    {trends.paid.isUp ? (
+                      <TrendingUp className="h-3 w-3 text-green-600" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 text-red-600" />
+                    )}
+                    <span className={trends.paid.isUp ? 'text-green-600' : 'text-red-600'}>
+                      ₮{Math.abs(trends.paid.value).toLocaleString()}
+                    </span>
+                  </>
+                )}
+                <span className="text-muted-foreground">
+                  • {summary?.paid_count || 0} төлөгдсөн
+                </span>
+              </div>
             </CardContent>
           </Card>
 
+          {/* Outstanding */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Үлдэгдэл</CardTitle>
-              <AlertCircle className="h-4 w-4 text-red-600" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Үлдэгдэл
+              </CardTitle>
+              <div className="rounded-full bg-red-100 p-2">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {loading ? '-' : `₮${(summary?.total_outstanding || 0).toLocaleString()}`}
+              <div className="text-xl font-bold text-red-600 sm:text-2xl">
+                {loading ? (
+                  <div className="h-8 w-24 animate-pulse rounded bg-gray-200" />
+                ) : (
+                  `₮${(summary?.total_outstanding || 0).toLocaleString()}`
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {summary?.overdue_count || 0} хугацаа хэтэрсэн
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Цуглуулалтын хувь</CardTitle>
-              <BarChart3 className="h-4 w-4 text-purple-600" />
+          {/* Collection Rate - Highlighted */}
+          <Card className={`border-2 ${getCollectionRateBgColor(collectionRate)}`}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Цуглуулалт
+              </CardTitle>
+              <div className={`rounded-full p-2 ${collectionRate >= 80 ? 'bg-green-200' : collectionRate >= 50 ? 'bg-amber-200' : 'bg-red-200'}`}>
+                <Percent className={`h-4 w-4 ${getCollectionRateColor(collectionRate)}`} />
+              </div>
             </CardHeader>
             <CardContent>
-              <div
-                className={`text-2xl font-bold ${
-                  (summary?.collection_rate || 0) >= 80
-                    ? 'text-green-600'
-                    : (summary?.collection_rate || 0) >= 50
-                      ? 'text-yellow-600'
-                      : 'text-red-600'
-                }`}
-              >
-                {loading ? '-' : `${(summary?.collection_rate || 0).toFixed(1)}%`}
+              <div className={`text-xl font-bold sm:text-2xl ${getCollectionRateColor(collectionRate)}`}>
+                {loading ? (
+                  <div className="h-8 w-16 animate-pulse rounded bg-gray-200" />
+                ) : (
+                  `${collectionRate.toFixed(1)}%`
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {summary?.partial_count || 0} хэсэгчлэн төлсөн
-              </p>
+              <div className="mt-1 flex items-center gap-1 text-xs">
+                {trends?.rate && (
+                  <>
+                    {trends.rate.isUp ? (
+                      <TrendingUp className="h-3 w-3 text-green-600" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 text-red-600" />
+                    )}
+                    <span className={trends.rate.isUp ? 'text-green-600' : 'text-red-600'}>
+                      {trends.rate.isUp ? '+' : ''}{trends.rate.value.toFixed(1)}%
+                    </span>
+                  </>
+                )}
+                <span className="text-muted-foreground">
+                  • {summary?.partial_count || 0} хэсэгчлэн
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Tabs for different reports */}
-        <Tabs defaultValue="revenue" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 md:w-auto md:grid-cols-none">
-            <TabsTrigger value="revenue" className="flex items-center gap-2">
+        {/* Tabs for different reports - Improved */}
+        <Tabs
+          defaultValue="revenue"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
+          <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
+            <TabsTrigger value="revenue" className="flex items-center gap-2 px-4">
               <BarChart3 className="h-4 w-4" />
-              <span className="hidden md:inline">Орлого</span>
+              <span>Орлого</span>
             </TabsTrigger>
-            <TabsTrigger value="overdue" className="flex items-center gap-2">
+            <TabsTrigger value="overdue" className="flex items-center gap-2 px-4">
               <AlertCircle className="h-4 w-4" />
-              <span className="hidden md:inline">Хугацаа хэтэрсэн</span>
+              <span className="hidden sm:inline">Хугацаа хэтэрсэн</span>
+              <span className="sm:hidden">Хэтэрсэн</span>
+              {(summary?.overdue_count || 0) > 0 && (
+                <span className="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                  {summary?.overdue_count}
+                </span>
+              )}
             </TabsTrigger>
-            <TabsTrigger value="property" className="flex items-center gap-2">
+            <TabsTrigger value="property" className="flex items-center gap-2 px-4">
               <Building2 className="h-4 w-4" />
-              <span className="hidden md:inline">Хөрөнгөөр</span>
+              <span className="hidden sm:inline">Хөрөнгөөр</span>
+              <span className="sm:hidden">Хөрөнгө</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="revenue" className="space-y-4">
             {loading ? (
-              <div className="flex h-64 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+              <div className="space-y-4">
+                <ChartSkeleton height={300} />
+                <ChartSkeleton height={280} />
               </div>
             ) : (
               <>
@@ -289,31 +395,21 @@ export default function ReportsPage() {
 
           <TabsContent value="overdue">
             {loading ? (
-              <div className="flex h-64 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-              </div>
+              <TableSkeleton rows={5} />
             ) : (
-              <OverdueTenantsTable
-                data={monthlyReport?.overdue_tenants || []}
-                month={selectedMonth}
-              />
+              <OverdueTenantsTable data={monthlyReport?.overdue_tenants || []} month={selectedMonth} />
             )}
           </TabsContent>
 
           <TabsContent value="property">
             {loading ? (
-              <div className="flex h-64 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-              </div>
+              <TableSkeleton rows={5} />
             ) : (
-              <PropertyReportTable
-                data={monthlyReport?.by_property || []}
-                month={selectedMonth}
-              />
+              <PropertyReportTable data={monthlyReport?.by_property || []} month={selectedMonth} />
             )}
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </>
   );
 }

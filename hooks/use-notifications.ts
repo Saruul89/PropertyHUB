@@ -1,152 +1,73 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useCallback } from 'react';
+import {
+  useNotificationsQuery,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+  getUnreadCount,
+} from '@/hooks/queries';
 import type { Notification } from '@/types';
-import type { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
 
-interface UseNotificationsOptions {
-    recipientId?: string;
-    recipientType?: 'tenant' | 'company_user';
-    limit?: number;
-    onlyUnread?: boolean;
-}
+type UseNotificationsOptions = {
+  recipientId?: string;
+  recipientType?: 'tenant' | 'company_user';
+  companyId?: string;
+  limit?: number;
+  onlyUnread?: boolean;
+};
 
-interface UseNotificationsReturn {
-    notifications: Notification[];
-    unreadCount: number;
-    loading: boolean;
-    error: string | null;
-    markAsRead: (notificationId: string) => Promise<void>;
-    markAllAsRead: () => Promise<void>;
-    refresh: () => Promise<void>;
-}
+type UseNotificationsReturn = {
+  notifications: Notification[];
+  unreadCount: number;
+  loading: boolean;
+  error: string | null;
+  markAsRead: (notificationId: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  refresh: () => Promise<void>;
+};
 
 export function useNotifications(options: UseNotificationsOptions = {}): UseNotificationsReturn {
-    const {
-        recipientId,
-        recipientType,
-        limit = 50,
-        onlyUnread = false,
-    } = options;
+  const { recipientId, recipientType, companyId, limit = 50, onlyUnread = false } = options;
 
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  const { data: notifications = [], isLoading: loading, error, refetch } = useNotificationsQuery({
+    recipientId,
+    recipientType,
+    companyId,
+    limit,
+    onlyUnread,
+  });
 
-    const fetchNotifications = useCallback(async () => {
-        if (!recipientId) {
-            setLoading(false);
-            return;
-        }
+  const markAsReadMutation = useMarkNotificationRead();
+  const markAllAsReadMutation = useMarkAllNotificationsRead();
 
-        const supabase = createClient();
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      await markAsReadMutation.mutateAsync(notificationId);
+    },
+    [markAsReadMutation]
+  );
 
-        let query = supabase
-            .from('notifications')
-            .select('*')
-            .eq('recipient_id', recipientId)
-            .eq('channel', 'in_app')
-            .order('created_at', { ascending: false })
-            .limit(limit);
+  const markAllAsRead = useCallback(async () => {
+    // Use companyId for company-wide mark all read
+    const targetId = companyId || recipientId;
+    if (!targetId) return;
+    await markAllAsReadMutation.mutateAsync(targetId);
+  }, [companyId, recipientId, markAllAsReadMutation]);
 
-        if (recipientType) {
-            query = query.eq('recipient_type', recipientType);
-        }
+  const refresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
-        if (onlyUnread) {
-            query = query.neq('status', 'read');
-        }
+  const unreadCount = getUnreadCount(notifications);
 
-        const { data, error: fetchError } = await query;
-
-        if (fetchError) {
-            setError(fetchError.message);
-        } else {
-            setNotifications(data || []);
-        }
-
-        setLoading(false);
-    }, [recipientId, recipientType, limit, onlyUnread]);
-
-    useEffect(() => {
-        fetchNotifications();
-    }, [fetchNotifications]);
-
-    // Subscribe to realtime updates
-    useEffect(() => {
-        if (!recipientId) return;
-
-        const supabase = createClient();
-
-        const channel = supabase
-            .channel('notifications')
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'notifications',
-                    filter: `recipient_id=eq.${recipientId}`,
-                },
-                (payload: RealtimePostgresInsertPayload<Notification>) => {
-                    const newNotification = payload.new;
-                    if (newNotification.channel === 'in_app') {
-                        setNotifications((prev) => [newNotification, ...prev].slice(0, limit));
-                    }
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [recipientId, limit]);
-
-    const markAsRead = useCallback(async (notificationId: string) => {
-        const supabase = createClient();
-
-        const { error: updateError } = await supabase
-            .from('notifications')
-            .update({ status: 'read', read_at: new Date().toISOString() })
-            .eq('id', notificationId);
-
-        if (!updateError) {
-            setNotifications((prev) =>
-                prev.map((n) =>
-                    n.id === notificationId ? { ...n, status: 'read', read_at: new Date().toISOString() } : n
-                )
-            );
-        }
-    }, []);
-
-    const markAllAsRead = useCallback(async () => {
-        if (!recipientId) return;
-
-        const supabase = createClient();
-
-        const { error: updateError } = await supabase
-            .from('notifications')
-            .update({ status: 'read', read_at: new Date().toISOString() })
-            .eq('recipient_id', recipientId)
-            .neq('status', 'read');
-
-        if (!updateError) {
-            setNotifications((prev) =>
-                prev.map((n) => ({ ...n, status: 'read', read_at: new Date().toISOString() }))
-            );
-        }
-    }, [recipientId]);
-
-    const unreadCount = notifications.filter((n) => n.status !== 'read').length;
-
-    return {
-        notifications,
-        unreadCount,
-        loading,
-        error,
-        markAsRead,
-        markAllAsRead,
-        refresh: fetchNotifications,
-    };
+  return {
+    notifications,
+    unreadCount,
+    loading,
+    error: error?.message ?? null,
+    markAsRead,
+    markAllAsRead,
+    refresh,
+  };
 }

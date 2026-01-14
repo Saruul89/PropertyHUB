@@ -45,13 +45,20 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Add days remaining to each lease
+    // Transform data to expected format with days remaining
     const leasesWithDays = data.map((lease) => {
         const endDate = new Date(lease.end_date);
         const daysRemaining = Math.ceil(
             (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
         );
-        return { ...lease, days_remaining: daysRemaining };
+        return {
+            id: lease.id,
+            tenant_name: lease.tenant?.name || '-',
+            unit_number: lease.unit?.unit_number || '-',
+            property_name: lease.unit?.property?.name || '-',
+            end_date: lease.end_date,
+            days_remaining: daysRemaining,
+        };
     });
 
     return NextResponse.json({

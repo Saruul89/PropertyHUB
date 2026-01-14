@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,7 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Document } from "@/types";
+import { useDocumentDownloadUrl } from "@/hooks/queries";
+import type { Document } from "@/types";
 import { Download, X, FileText, Image, File } from "lucide-react";
 
 export interface DocumentViewerProps {
@@ -32,35 +32,21 @@ const isPdfFile = (mimeType?: string) => {
   return mimeType === "application/pdf";
 };
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function DocumentViewer({
   document,
   isOpen,
   onClose,
 }: DocumentViewerProps) {
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (document && isOpen) {
-      fetchDownloadUrl();
-    }
-  }, [document, isOpen]);
-
-  const fetchDownloadUrl = async () => {
-    if (!document) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/documents/${document.id}/download`);
-      const data = await response.json();
-      if (data.url) {
-        setDownloadUrl(data.url);
-      }
-    } catch (error) {
-      console.error("Failed to fetch download URL:", error);
-    }
-    setLoading(false);
-  };
+  const { data: downloadUrl, isLoading: loading } = useDocumentDownloadUrl(
+    document?.id ?? null,
+    isOpen && !!document
+  );
 
   const handleDownload = () => {
     if (downloadUrl) {
@@ -157,10 +143,4 @@ export function DocumentViewer({
       </DialogContent>
     </Dialog>
   );
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

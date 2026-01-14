@@ -335,6 +335,11 @@ export interface MaintenanceRequest {
     updated_at: string;
 }
 
+export interface MaintenanceWithRelations extends MaintenanceRequest {
+    unit: Unit & { property: Property };
+    tenant?: Tenant;
+}
+
 export interface Document {
     id: string;
     company_id: string;

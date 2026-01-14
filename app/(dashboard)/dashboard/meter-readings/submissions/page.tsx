@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth, useFeature } from "@/hooks";
+import { toast } from "sonner";
 import {
   TenantMeterSubmission,
   FeeType,
@@ -23,7 +24,6 @@ import {
   Clock,
   Eye,
   Filter,
-  Image as ImageIcon,
 } from "lucide-react";
 
 interface SubmissionWithDetails extends TenantMeterSubmission {
@@ -37,16 +37,20 @@ const statusConfig: Record<
   { label: string; color: string; icon: React.ElementType }
 > = {
   pending: {
-    label: "承認待ち",
+    label: "Хүлээгдэж буй",
     color: "bg-yellow-100 text-yellow-800",
     icon: Clock,
   },
   approved: {
-    label: "承認済み",
+    label: "Зөвшөөрсөн",
     color: "bg-green-100 text-green-800",
     icon: CheckCircle,
   },
-  rejected: { label: "却下", color: "bg-red-100 text-red-800", icon: XCircle },
+  rejected: {
+    label: "Татгалзсан",
+    color: "bg-red-100 text-red-800",
+    icon: XCircle,
+  },
 };
 
 export default function MeterSubmissionsPage() {
@@ -149,13 +153,13 @@ export default function MeterSubmissionsPage() {
         current_reading: submission.submitted_reading,
         unit_price: unitPrice,
         recorded_by: user?.id,
-        notes: `入居者提出を承認 (ID: ${submission.id})`,
+        notes: `Tenant submitted (ID: ${submission.id})`,
       })
       .select()
       .single();
 
     if (readingError) {
-      alert("メーター記録の作成に失敗しました");
+      toast.error("Тоолуурын бүртгэл үүсгэхэд алдаа гарлаа");
       setProcessing(false);
       return;
     }
@@ -172,7 +176,7 @@ export default function MeterSubmissionsPage() {
       .eq("id", submission.id);
 
     if (updateError) {
-      alert("Статус更新に失敗しました");
+      toast.error("Төлөв шинэчлэхэд алдаа гарлаа");
     } else {
       setSubmissions(
         submissions.map((s) =>
@@ -186,13 +190,14 @@ export default function MeterSubmissionsPage() {
         )
       );
       setSelectedSubmission(null);
+      toast.success("Амжилттай зөвшөөрлөө");
     }
     setProcessing(false);
   };
 
   const handleReject = async (submission: SubmissionWithDetails) => {
     if (!rejectionReason.trim()) {
-      alert("却下理由を入力してください");
+      toast.error("Татгалзах шалтгаан оруулна уу");
       return;
     }
 
@@ -210,7 +215,7 @@ export default function MeterSubmissionsPage() {
       .eq("id", submission.id);
 
     if (error) {
-      alert("Статус更新に失敗しました");
+      toast.error("Төлөв шинэчлэхэд алдаа гарлаа");
     } else {
       setSubmissions(
         submissions.map((s) =>
@@ -225,23 +230,40 @@ export default function MeterSubmissionsPage() {
       );
       setSelectedSubmission(null);
       setRejectionReason("");
+      toast.success("Татгалзлаа");
     }
     setProcessing(false);
   };
 
   const pendingCount = submissions.filter((s) => s.status === "pending").length;
 
+  // Handle Escape key to close modal
+  const handleEscapeKey = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectedSubmission) {
+        setSelectedSubmission(null);
+        setRejectionReason("");
+      }
+    },
+    [selectedSubmission]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleEscapeKey);
+    return () => document.removeEventListener("keydown", handleEscapeKey);
+  }, [handleEscapeKey]);
+
   if (!hasMeterReadings) {
     return (
       <>
-        <Header title="入居者メーター提出" showBack />
+        <Header title="Оршин суугчийн тоолуурын илгээлт" showBack />
         <div className="p-6">
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <ClipboardCheck className="mb-4 h-12 w-12 text-gray-400" />
-              <p className="text-gray-600">メーター機能は利用できません</p>
+              <p className="text-gray-600">Тоолуурын функц идэвхгүй байна</p>
               <p className="text-sm text-gray-500">
-                この機能を有効にするには管理者にお問い合わせください
+                Энэ функцийг идэвхжүүлэхийн тулд админтай холбогдоно уу
               </p>
             </CardContent>
           </Card>
@@ -252,16 +274,16 @@ export default function MeterSubmissionsPage() {
 
   return (
     <>
-      <Header title="入居者メーター提出" showBack />
-      <div className="p-6">
+      <Header title="Оршин суугчийн тоолуурын илгээлт" showBack />
+      <div className="p-4 md:p-6">
         {/* Stats */}
-        <div className="mb-6 grid gap-4 md:grid-cols-3">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-yellow-600">
                 {pendingCount}
               </div>
-              <p className="text-sm text-gray-500">承認待ち</p>
+              <p className="text-sm text-gray-500">Хүлээгдэж буй</p>
             </CardContent>
           </Card>
           <Card>
@@ -269,7 +291,7 @@ export default function MeterSubmissionsPage() {
               <div className="text-2xl font-bold text-green-600">
                 {submissions.filter((s) => s.status === "approved").length}
               </div>
-              <p className="text-sm text-gray-500">承認済み（今月）</p>
+              <p className="text-sm text-gray-500">Зөвшөөрсөн (энэ сар)</p>
             </CardContent>
           </Card>
           <Card>
@@ -277,17 +299,17 @@ export default function MeterSubmissionsPage() {
               <div className="text-2xl font-bold text-red-600">
                 {submissions.filter((s) => s.status === "rejected").length}
               </div>
-              <p className="text-sm text-gray-500">却下</p>
+              <p className="text-sm text-gray-500">Татгалзсан</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex flex-wrap items-center gap-4">
-          <div className="relative w-64">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="入居者名、өрөөний дугаарで検索..."
+              placeholder="Оршин суугч, өрөөний дугаараар хайх..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
@@ -302,7 +324,7 @@ export default function MeterSubmissionsPage() {
                 setStatusFilter(e.target.value as MeterSubmissionStatus | "all")
               }
             >
-              <option value="all">すべて</option>
+              <option value="all">Бүгд</option>
               {Object.entries(statusConfig).map(([key, config]) => (
                 <option key={key} value={key}>
                   {config.label}
@@ -321,36 +343,36 @@ export default function MeterSubmissionsPage() {
               <ClipboardCheck className="mb-4 h-12 w-12 text-gray-400" />
               <p className="text-gray-600">
                 {search || statusFilter !== "all"
-                  ? "該当する提出がありません"
-                  : "入居者からの提出がありません"}
+                  ? "Тохирох илгээлт олдсонгүй"
+                  : "Оршин суугчаас илгээлт байхгүй"}
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="overflow-hidden rounded-lg border bg-white">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-lg border bg-white">
+            <table className="w-full min-w-[800px]">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
-                    入居者
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 md:px-6">
+                    Оршин суугч
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
-                    物件・部屋
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 md:px-6">
+                    Барилга・Өрөө
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
-                    料金タイプ
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 md:px-6">
+                    Төлбөрийн төрөл
                   </th>
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
-                    提出値
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 md:px-6">
+                    Илгээсэн утга
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
-                    提出日時
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 md:px-6">
+                    Илгээсэн огноо
                   </th>
-                  <th className="px-6 py-3 text-center text-sm font-medium text-gray-500">
-                    Статус
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-500 md:px-6">
+                    Төлөв
                   </th>
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
-                    操作
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 md:px-6">
+                    Үйлдэл
                   </th>
                 </tr>
               </thead>
@@ -361,10 +383,10 @@ export default function MeterSubmissionsPage() {
 
                   return (
                     <tr key={submission.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium">
+                      <td className="px-4 py-4 font-medium md:px-6">
                         {submission.tenant?.name}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4 md:px-6">
                         <div className="text-sm">
                           <p>{submission.unit?.property?.name}</p>
                           <p className="text-gray-500">
@@ -372,20 +394,20 @@ export default function MeterSubmissionsPage() {
                           </p>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4 md:px-6">
                         <span className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                           {submission.fee_type?.name}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right font-mono">
+                      <td className="px-4 py-4 text-right font-mono md:px-6">
                         {submission.submitted_reading.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-4 py-4 text-sm md:px-6">
                         {new Date(submission.submitted_at).toLocaleString(
-                          "ja-JP"
+                          "mn-MN"
                         )}
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-4 py-4 text-center md:px-6">
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${statusInfo.color}`}
                         >
@@ -393,7 +415,7 @@ export default function MeterSubmissionsPage() {
                           {statusInfo.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4 md:px-6">
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"
@@ -414,48 +436,56 @@ export default function MeterSubmissionsPage() {
 
         {/* Detail Modal */}
         {selectedSubmission && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <Card className="w-full max-w-lg">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedSubmission(null);
+                setRejectionReason("");
+              }
+            }}
+          >
+            <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
               <CardHeader>
-                <CardTitle>メーター提出の詳細</CardTitle>
+                <CardTitle>Тоолуурын илгээлтийн дэлгэрэнгүй</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <Label className="text-gray-500">入居者</Label>
+                    <Label className="text-gray-500">Оршин суугч</Label>
                     <p className="font-medium">
                       {selectedSubmission.tenant?.name}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">部屋</Label>
+                    <Label className="text-gray-500">Өрөө</Label>
                     <p className="font-medium">
                       {selectedSubmission.unit?.property?.name} -{" "}
                       {selectedSubmission.unit?.unit_number}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">料金タイプ</Label>
+                    <Label className="text-gray-500">Төлбөрийн төрөл</Label>
                     <p className="font-medium">
                       {selectedSubmission.fee_type?.name}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">提出値</Label>
+                    <Label className="text-gray-500">Илгээсэн утга</Label>
                     <p className="text-lg font-bold">
                       {selectedSubmission.submitted_reading.toLocaleString()}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">提出日時</Label>
+                    <Label className="text-gray-500">Илгээсэн огноо</Label>
                     <p className="font-medium">
                       {new Date(selectedSubmission.submitted_at).toLocaleString(
-                        "ja-JP"
+                        "mn-MN"
                       )}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">Статус</Label>
+                    <Label className="text-gray-500">Төлөв</Label>
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
                         statusConfig[selectedSubmission.status].color
@@ -468,12 +498,12 @@ export default function MeterSubmissionsPage() {
 
                 {selectedSubmission.photo_url && (
                   <div>
-                    <Label className="text-gray-500">写真</Label>
+                    <Label className="text-gray-500">Зураг</Label>
                     <div className="mt-2 overflow-hidden rounded-lg border">
                       <img
                         src={selectedSubmission.photo_url}
-                        alt="メーター写真"
-                        className="h-48 w-full object-contain"
+                        alt="Тоолуурын зураг"
+                        className="h-48 w-full object-cover"
                       />
                     </div>
                   </div>
@@ -481,7 +511,7 @@ export default function MeterSubmissionsPage() {
 
                 {selectedSubmission.notes && (
                   <div>
-                    <Label className="text-gray-500">メモ</Label>
+                    <Label className="text-gray-500">Тэмдэглэл</Label>
                     <p className="text-sm">{selectedSubmission.notes}</p>
                   </div>
                 )}
@@ -489,7 +519,7 @@ export default function MeterSubmissionsPage() {
                 {selectedSubmission.status === "rejected" &&
                   selectedSubmission.rejection_reason && (
                     <div className="rounded-lg bg-red-50 p-3">
-                      <Label className="text-red-700">却下理由</Label>
+                      <Label className="text-red-700">Татгалзах шалтгаан</Label>
                       <p className="text-sm text-red-600">
                         {selectedSubmission.rejection_reason}
                       </p>
@@ -500,13 +530,13 @@ export default function MeterSubmissionsPage() {
                   <div className="space-y-3 border-t pt-4">
                     <div>
                       <Label htmlFor="rejectionReason">
-                        却下理由（却下する場合）
+                        Татгалзах шалтгаан (татгалзах үед)
                       </Label>
                       <Input
                         id="rejectionReason"
                         value={rejectionReason}
                         onChange={(e) => setRejectionReason(e.target.value)}
-                        placeholder="数値が不正、写真が不鮮明など"
+                        placeholder="Утга буруу, зураг тод биш гэх мэт"
                       />
                     </div>
                     <div className="flex gap-3">
@@ -517,7 +547,7 @@ export default function MeterSubmissionsPage() {
                         disabled={processing}
                       >
                         <XCircle className="mr-2 h-4 w-4" />
-                        却下
+                        {processing ? "Боловсруулж байна..." : "Татгалзах"}
                       </Button>
                       <Button
                         className="flex-1"
@@ -525,7 +555,7 @@ export default function MeterSubmissionsPage() {
                         disabled={processing}
                       >
                         <CheckCircle className="mr-2 h-4 w-4" />
-                        承認
+                        {processing ? "Боловсруулж байна..." : "Зөвшөөрөх"}
                       </Button>
                     </div>
                   </div>
@@ -539,7 +569,7 @@ export default function MeterSubmissionsPage() {
                       setRejectionReason("");
                     }}
                   >
-                    閉じる
+                    Хаах
                   </Button>
                 </div>
               </CardContent>

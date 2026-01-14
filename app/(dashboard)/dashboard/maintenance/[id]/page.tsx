@@ -8,9 +8,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { createClient } from "@/lib/supabase/client";
-import { MaintenanceRequest, Unit, Property, Tenant } from "@/types";
+import { MaintenanceWithRelations, MaintenanceRequest } from "@/types";
 import { useFeature } from "@/hooks";
+import { formatDate } from "@/lib/i18n/date-format";
+import { formatCurrency } from "@/lib/i18n/currency";
+import { toast } from "sonner";
 import {
   Wrench,
   Clock,
@@ -18,17 +32,10 @@ import {
   XCircle,
   Building2,
   User,
-  Phone,
-  DollarSign,
-  Calendar,
-  Edit,
   ArrowRight,
+  Edit,
+  Loader2,
 } from "lucide-react";
-
-interface MaintenanceWithRelations extends MaintenanceRequest {
-  unit: Unit & { property: Property };
-  tenant?: Tenant;
-}
 
 const statusConfig = {
   pending: {
@@ -38,7 +45,7 @@ const statusConfig = {
     bg: "bg-yellow-50",
   },
   in_progress: {
-    label: "Шийдвэрлэж буй",
+    label: "Хийгдэж буй",
     icon: Wrench,
     color: "text-blue-600",
     bg: "bg-blue-50",
@@ -73,8 +80,10 @@ export default function MaintenanceDetailPage() {
   const [request, setRequest] = useState<MaintenanceWithRelations | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [statusChanging, setStatusChanging] = useState(false);
   const [editData, setEditData] = useState({
-    status: "" as MaintenanceRequest["status"],
+    status: "pending" as MaintenanceRequest["status"],
     vendor_name: "",
     vendor_phone: "",
     estimated_cost: 0,
@@ -123,79 +132,90 @@ export default function MaintenanceDetailPage() {
   };
 
   const handleUpdateRequest = async () => {
-    const supabase = createClient();
+    setSaving(true);
+    try {
+      const supabase = createClient();
 
-    await supabase
-      .from("maintenance_requests")
-      .update({
-        status: editData.status,
-        vendor_name: editData.vendor_name || null,
-        vendor_phone: editData.vendor_phone || null,
-        estimated_cost: editData.estimated_cost || null,
-        actual_cost: editData.actual_cost || null,
-        scheduled_date: editData.scheduled_date || null,
-        completed_date:
-          editData.status === "completed"
-            ? editData.completed_date || new Date().toISOString().split("T")[0]
-            : null,
-        notes: editData.notes || null,
-      })
-      .eq("id", requestId);
+      const { error } = await supabase
+        .from("maintenance_requests")
+        .update({
+          status: editData.status,
+          vendor_name: editData.vendor_name || null,
+          vendor_phone: editData.vendor_phone || null,
+          estimated_cost: editData.estimated_cost || null,
+          actual_cost: editData.actual_cost || null,
+          scheduled_date: editData.scheduled_date || null,
+          completed_date:
+            editData.status === "completed"
+              ? editData.completed_date || new Date().toISOString().split("T")[0]
+              : null,
+          notes: editData.notes || null,
+        })
+        .eq("id", requestId);
 
-    setEditing(false);
-    fetchRequest();
+      if (error) throw error;
+
+      toast.success("Амжилттай хадгалагдлаа");
+      setEditing(false);
+      fetchRequest();
+    } catch {
+      toast.error("Хадгалахад алдаа гарлаа");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleStatusChange = async (
     newStatus: MaintenanceRequest["status"]
   ) => {
-    const supabase = createClient();
+    setStatusChanging(true);
+    try {
+      const supabase = createClient();
 
-    const updates: Partial<MaintenanceRequest> = { status: newStatus };
-    if (newStatus === "completed") {
-      updates.completed_date = new Date().toISOString().split("T")[0];
-    }
-
-    await supabase
-      .from("maintenance_requests")
-      .update(updates)
-      .eq("id", requestId);
-
-    // Sync unit status
-    if (request?.unit_id) {
-      if (newStatus === "in_progress") {
-        // Set unit to maintenance status
-        await supabase
-          .from("units")
-          .update({ status: "maintenance" })
-          .eq("id", request.unit_id);
-      } else if (newStatus === "completed" || newStatus === "cancelled") {
-        // Restore unit status based on active lease
-        const { data: activeLease } = await supabase
-          .from("leases")
-          .select("id")
-          .eq("unit_id", request.unit_id)
-          .eq("status", "active")
-          .single();
-
-        const newUnitStatus = activeLease ? "occupied" : "vacant";
-
-        await supabase
-          .from("units")
-          .update({ status: newUnitStatus })
-          .eq("id", request.unit_id);
+      const updates: Partial<MaintenanceRequest> = { status: newStatus };
+      if (newStatus === "completed") {
+        updates.completed_date = new Date().toISOString().split("T")[0];
       }
+
+      const { error } = await supabase
+        .from("maintenance_requests")
+        .update(updates)
+        .eq("id", requestId);
+
+      if (error) throw error;
+
+      // Sync unit status
+      if (request?.unit_id) {
+        if (newStatus === "in_progress") {
+          await supabase
+            .from("units")
+            .update({ status: "maintenance" })
+            .eq("id", request.unit_id);
+        } else if (newStatus === "completed" || newStatus === "cancelled") {
+          const { data: activeLease } = await supabase
+            .from("leases")
+            .select("id")
+            .eq("unit_id", request.unit_id)
+            .eq("status", "active")
+            .single();
+
+          const newUnitStatus = activeLease ? "occupied" : "vacant";
+
+          await supabase
+            .from("units")
+            .update({ status: newUnitStatus })
+            .eq("id", request.unit_id);
+        }
+      }
+
+      const statusLabel = statusConfig[newStatus].label;
+      toast.success(`Төлөв "${statusLabel}" болж өөрчлөгдлөө`);
+      fetchRequest();
+    } catch {
+      toast.error("Төлөв өөрчлөхөд алдаа гарлаа");
+    } finally {
+      setStatusChanging(false);
     }
-
-    fetchRequest();
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ja-JP");
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("ja-JP").format(amount);
   };
 
   if (loading || !request) {
@@ -257,7 +277,7 @@ export default function MaintenanceDetailPage() {
 
                 {/* Status Progression */}
                 {request.status !== "cancelled" && (
-                  <div className="mt-6 flex items-center justify-center gap-2">
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
                     {["pending", "in_progress", "completed"].map((s, i) => {
                       const isActive = request.status === s;
                       const isPast =
@@ -273,7 +293,7 @@ export default function MaintenanceDetailPage() {
                             <ArrowRight className="mx-2 h-4 w-4 text-gray-300" />
                           )}
                           <button
-                            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
                               isActive
                                 ? `${config.bg} ${config.color}`
                                 : isPast
@@ -285,7 +305,7 @@ export default function MaintenanceDetailPage() {
                                 s as MaintenanceRequest["status"]
                               )
                             }
-                            disabled={isPast}
+                            disabled={isPast || statusChanging}
                           >
                             {config.label}
                           </button>
@@ -431,12 +451,16 @@ export default function MaintenanceDetailPage() {
                         />
                       </div>
                       <div className="flex gap-2">
-                        <Button onClick={handleUpdateRequest}>Хадгалах</Button>
+                        <Button onClick={handleUpdateRequest} disabled={saving}>
+                          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Хадгалах
+                        </Button>
                         <Button
                           variant="outline"
                           onClick={() => setEditing(false)}
+                          disabled={saving}
                         >
-                          Цуцлах
+                          Болих
                         </Button>
                       </div>
                     </div>
@@ -473,7 +497,7 @@ export default function MaintenanceDetailPage() {
                         </div>
                         <div className="font-medium">
                           {request.estimated_cost
-                            ? `¥${formatCurrency(request.estimated_cost)}`
+                            ? formatCurrency(request.estimated_cost)
                             : "-"}
                         </div>
                       </div>
@@ -483,7 +507,7 @@ export default function MaintenanceDetailPage() {
                         </div>
                         <div className="font-medium">
                           {request.actual_cost
-                            ? `¥${formatCurrency(request.actual_cost)}`
+                            ? formatCurrency(request.actual_cost)
                             : "-"}
                         </div>
                       </div>
@@ -612,14 +636,40 @@ export default function MaintenanceDetailPage() {
               request.status !== "completed" && (
                 <Card>
                   <CardContent className="pt-4">
-                    <Button
-                      variant="destructive"
-                      className="w-full"
-                      onClick={() => handleStatusChange("cancelled")}
-                    >
-                      <XCircle className="mr-2 h-4 w-4" />
-                      Цуцлах
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          className="w-full"
+                          disabled={statusChanging}
+                        >
+                          {statusChanging ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <XCircle className="mr-2 h-4 w-4" />
+                          )}
+                          Цуцлах
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Хүсэлтийг цуцлах уу?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Та энэ засварын хүсэлтийг цуцлахдаа итгэлтэй байна уу?
+                            Энэ үйлдлийг буцаах боломжгүй.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Үгүй</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleStatusChange("cancelled")}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Тийм, цуцлах
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </CardContent>
                 </Card>
               )}

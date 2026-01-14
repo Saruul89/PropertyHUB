@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/layout";
 import { useAuth } from "@/hooks";
+import {
+  useCompanyUsers,
+  useCreateCompanyUser,
+  useUpdateCompanyUser,
+  useDeleteCompanyUser,
+} from "@/hooks/queries";
 import {
   Users,
   Plus,
@@ -33,14 +39,16 @@ import type { StaffFormData } from "@/lib/validations";
 
 export default function UsersSettingsPage() {
   const { companyId, role } = useAuth();
-  const [users, setUsers] = useState<CompanyUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: users = [], isLoading: loading } = useCompanyUsers(companyId);
+  const createUser = useCreateCompanyUser();
+  const updateUser = useUpdateCompanyUser();
+  const deleteUser = useDeleteCompanyUser();
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<CompanyUser | null>(null);
   const [staffToDelete, setStaffToDelete] = useState<CompanyUser | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newStaffData, setNewStaffData] = useState<{
     name: string;
     email: string;
@@ -50,26 +58,7 @@ export default function UsersSettingsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const isAdmin = role === "company_admin";
-
-  useEffect(() => {
-    if (companyId) {
-      fetchUsers();
-    }
-  }, [companyId]);
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch("/api/company-users");
-      const data = await response.json();
-      if (data.users) {
-        setUsers(data.users);
-      }
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isSubmitting = createUser.isPending || updateUser.isPending || deleteUser.isPending;
 
   const handleAddStaff = () => {
     setSelectedStaff(null);
@@ -87,87 +76,38 @@ export default function UsersSettingsPage() {
   };
 
   const handleSubmit = async (data: StaffFormData) => {
-    setIsSubmitting(true);
     try {
       if (selectedStaff) {
-        // Edit existing staff
-        const response = await fetch(`/api/company-users/${selectedStaff.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: data.name,
-            phone: data.phone,
-            is_active: data.is_active,
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Алдаа гарлаа");
-        }
-
-        await fetchUsers();
+        await updateUser.mutateAsync({ id: selectedStaff.id, data });
         setIsFormOpen(false);
       } else {
-        // Add new staff
-        const response = await fetch("/api/company-users", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.message || "Алдаа гарлаа");
-        }
-
+        const result = await createUser.mutateAsync(data);
         setNewStaffData({
           name: data.name,
           email: data.email,
           initialPassword: result.initialPassword,
         });
-
-        await fetchUsers();
         setIsFormOpen(false);
         setIsSuccessOpen(true);
       }
     } catch (error) {
       alert(error instanceof Error ? error.message : "Алдаа гарлаа");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
     if (!staffToDelete) return;
-
-    setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/company-users/${staffToDelete.id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Устгахад алдаа гарлаа");
-      }
-
-      await fetchUsers();
+      await deleteUser.mutateAsync(staffToDelete.id);
       setIsDeleteOpen(false);
       setStaffToDelete(null);
     } catch (error) {
       alert(error instanceof Error ? error.message : "Устгахад алдаа гарлаа");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const togglePasswordVisibility = (userId: string) => {
-    setShowPasswords((prev) => ({
-      ...prev,
-      [userId]: !prev[userId],
-    }));
+    setShowPasswords((prev) => ({ ...prev, [userId]: !prev[userId] }));
   };
 
   const copyPassword = async (password: string, userId: string) => {
@@ -257,9 +197,7 @@ export default function UsersSettingsPage() {
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-gray-400">Анхны нууц үг:</span>
                           <code className="text-xs bg-white px-2 py-0.5 rounded border">
-                            {showPasswords[user.id]
-                              ? user.initial_password
-                              : "••••••••"}
+                            {showPasswords[user.id] ? user.initial_password : "••••••••"}
                           </code>
                           <button
                             onClick={() => togglePasswordVisibility(user.id)}
@@ -287,11 +225,7 @@ export default function UsersSettingsPage() {
                   </div>
                   {isAdmin && (
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditStaff(user)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleEditStaff(user)}>
                         <Edit2 className="h-4 w-4" />
                       </Button>
                       {user.role !== "admin" && (

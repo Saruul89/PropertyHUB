@@ -40,26 +40,26 @@ export function VendorSection({
                 <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
                         <Wrench className="h-4 w-4" />
-                        業者情報
+                        Гүйцэтгэгчийн мэдээлэл
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                            <p className="text-sm text-gray-500">業者名</p>
+                            <p className="text-sm text-gray-500">Гүйцэтгэгчийн нэр</p>
                             <p className="font-medium">{value.vendor_name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">連絡先</p>
+                            <p className="text-sm text-gray-500">Утас</p>
                             <p className="font-medium">{value.vendor_phone || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">見積金額</p>
+                            <p className="text-sm text-gray-500">Төсөвт өртөг</p>
                             <p className="font-medium">{formatCurrency(value.estimated_cost)}</p>
                         </div>
                         {showActualCost && (
                             <div>
-                                <p className="text-sm text-gray-500">実費</p>
+                                <p className="text-sm text-gray-500">Бодит зардал</p>
                                 <p className="font-medium">{formatCurrency(value.actual_cost)}</p>
                             </div>
                         )}
@@ -73,36 +73,36 @@ export function VendorSection({
         <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
             <h4 className="font-medium text-gray-900 flex items-center gap-2">
                 <Wrench className="h-4 w-4" />
-                業者情報
+                Гүйцэтгэгчийн мэдээлэл
             </h4>
 
             <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                    <Label htmlFor="vendor_name">業者名</Label>
+                    <Label htmlFor="vendor_name">Гүйцэтгэгчийн нэр</Label>
                     <Input
                         id="vendor_name"
-                        placeholder="業者名を入力"
+                        placeholder="Нэр оруулах"
                         value={value.vendor_name || ''}
                         onChange={(e) => handleChange('vendor_name', e.target.value || undefined)}
                     />
                 </div>
 
                 <div>
-                    <Label htmlFor="vendor_phone">連絡先</Label>
+                    <Label htmlFor="vendor_phone">Утас</Label>
                     <Input
                         id="vendor_phone"
-                        placeholder="電話番号を入力"
+                        placeholder="Утас оруулах"
                         value={value.vendor_phone || ''}
                         onChange={(e) => handleChange('vendor_phone', e.target.value || undefined)}
                     />
                 </div>
 
                 <div>
-                    <Label htmlFor="estimated_cost">見積金額</Label>
+                    <Label htmlFor="estimated_cost">Төсөвт өртөг</Label>
                     <Input
                         id="estimated_cost"
                         type="number"
-                        placeholder="見積金額を入力"
+                        placeholder="Төсөвт өртөг оруулах"
                         value={value.estimated_cost || ''}
                         onChange={(e) =>
                             handleChange(
@@ -115,11 +115,11 @@ export function VendorSection({
 
                 {showActualCost && (
                     <div>
-                        <Label htmlFor="actual_cost">実費</Label>
+                        <Label htmlFor="actual_cost">Бодит зардал</Label>
                         <Input
                             id="actual_cost"
                             type="number"
-                            placeholder="実費を入力"
+                            placeholder="Бодит зардал оруулах"
                             value={value.actual_cost || ''}
                             onChange={(e) =>
                                 handleChange(

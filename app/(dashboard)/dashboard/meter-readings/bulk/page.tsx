@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth, useFeature } from "@/hooks";
+import { toast } from "sonner";
 import { FeeType, Property, Unit, MeterReading } from "@/types";
-import { Save, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Save, AlertCircle, CheckCircle2, RotateCcw } from "lucide-react";
 
 interface UnitWithLastReading extends Unit {
   last_reading?: number;
@@ -189,7 +190,7 @@ export default function BulkMeterEntryPage() {
     );
 
     if (validEntries.length === 0) {
-      alert("Хадгалах тоолуурын бүртгэл байхгүй байна");
+      toast.error("Хадгалах тоолуурын бүртгэл байхгүй байна");
       return;
     }
 
@@ -212,10 +213,22 @@ export default function BulkMeterEntryPage() {
     setSaving(false);
 
     if (error) {
-      alert("Хадгалахад алдаа гарлаа: " + error.message);
+      toast.error("Хадгалахад алдаа гарлаа: " + error.message);
     } else {
+      toast.success(`${validEntries.length} тоолуурын бүртгэл амжилттай хадгалагдлаа`);
       router.push("/dashboard/meter-readings");
     }
+  };
+
+  const handleReset = () => {
+    setEntries(
+      entries.map((entry) => ({
+        ...entry,
+        current_reading: "",
+        isValid: true,
+        error: undefined,
+      }))
+    );
   };
 
   const filledCount = entries.filter(
@@ -253,14 +266,14 @@ export default function BulkMeterEntryPage() {
   return (
     <>
       <Header title="Тоолуурын бүртгэл" showBack />
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         {/* Selection */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Оруулах нөхцөл сонгох</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <Label htmlFor="property">Хөрөнгө</Label>
                 <select
@@ -325,8 +338,8 @@ export default function BulkMeterEntryPage() {
         ) : (
           <>
             {/* Summary */}
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
                 <span>
                   Оруулсан: <strong>{filledCount}</strong> / {entries.length}
                 </span>
@@ -337,36 +350,47 @@ export default function BulkMeterEntryPage() {
                   Нийт дүн: <strong>₮{totalAmount.toLocaleString()}</strong>
                 </span>
               </div>
-              <Button
-                onClick={handleSave}
-                disabled={saving || filledCount === 0}
-              >
-                <Save className="mr-2 h-4 w-4" />
-                {saving ? "Хадгалж байна..." : `${filledCount} бүртгэл хадгалах`}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleReset}
+                  disabled={saving || filledCount === 0}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Цэвэрлэх
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={saving || filledCount === 0}
+                  className="flex-1 sm:flex-none"
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {saving ? "Хадгалж байна..." : `${filledCount} бүртгэл хадгалах`}
+                </Button>
+              </div>
             </div>
 
             {/* Entry Table */}
-            <div className="overflow-hidden rounded-lg border bg-white">
-              <table className="w-full">
+            <div className="overflow-x-auto rounded-lg border bg-white">
+              <table className="w-full min-w-[600px]">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">
-                      өрөөний дугаар
+                    <th className="px-3 py-3 text-left text-sm font-medium text-gray-500 md:px-4">
+                      Өрөөний дугаар
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+                    <th className="px-3 py-3 text-right text-sm font-medium text-gray-500 md:px-4">
                       Өмнөх заалт
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-500">
+                    <th className="px-3 py-3 text-center text-sm font-medium text-gray-500 md:px-4">
                       Одоогийн заалт
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+                    <th className="px-3 py-3 text-right text-sm font-medium text-gray-500 md:px-4">
                       Хэрэглээ
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">
+                    <th className="px-3 py-3 text-right text-sm font-medium text-gray-500 md:px-4">
                       Дүн
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-500">
+                    <th className="px-3 py-3 text-center text-sm font-medium text-gray-500 md:px-4">
                       Төлөв
                     </th>
                   </tr>
@@ -383,19 +407,19 @@ export default function BulkMeterEntryPage() {
                         key={entry.unit_id}
                         className={
                           !entry.isValid
-                            ? "bg-red-50"
+                            ? "bg-red-50/70"
                             : isFilled
-                            ? "bg-green-50"
+                            ? "bg-green-50/70"
                             : ""
                         }
                       >
-                        <td className="px-4 py-3 font-medium">
+                        <td className="px-3 py-3 font-medium md:px-4">
                           {entry.unit_number}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-gray-500">
+                        <td className="px-3 py-3 text-right font-mono text-gray-500 md:px-4">
                           {entry.previous_reading.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3 md:px-4">
                           <Input
                             type="number"
                             value={entry.current_reading}
@@ -415,7 +439,7 @@ export default function BulkMeterEntryPage() {
                             </p>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono">
+                        <td className="px-3 py-3 text-right font-mono md:px-4">
                           {consumption > 0 ? (
                             <span className="text-blue-600">
                               {consumption.toLocaleString()}
@@ -424,14 +448,14 @@ export default function BulkMeterEntryPage() {
                             "-"
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono">
+                        <td className="px-3 py-3 text-right font-mono md:px-4">
                           {amount > 0 ? (
                             <span>₮{amount.toLocaleString()}</span>
                           ) : (
                             "-"
                           )}
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-3 py-3 text-center md:px-4">
                           {!entry.isValid ? (
                             <AlertCircle className="mx-auto h-5 w-5 text-red-500" />
                           ) : isFilled ? (

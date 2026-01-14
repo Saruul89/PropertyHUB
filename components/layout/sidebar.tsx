@@ -21,12 +21,12 @@ import {
 import { useAuth } from '@/hooks';
 import { Button } from '@/components/ui/button';
 
-interface NavItem {
+type NavItem = {
     href: string;
     label: string;
     icon: React.ElementType;
     feature?: string;
-}
+};
 
 const navItems: NavItem[] = [
     { href: '/dashboard', label: 'Хянах самбар', icon: LayoutDashboard },
@@ -62,9 +62,9 @@ export function Sidebar() {
     });
 
     return (
-        <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#1a1a2e]">
+        <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#0f172a]">
             {/* Wave decoration */}
-            <div className="absolute bottom-0 left-0 right-0 h-48 opacity-10 pointer-events-none">
+            <div className="absolute bottom-0 left-0 right-0 h-48 opacity-10 pointer-events-none overflow-hidden">
                 <svg viewBox="0 0 200 200" className="h-full w-full" preserveAspectRatio="none">
                     <path
                         d="M0,100 Q50,50 100,100 T200,100"
@@ -84,22 +84,32 @@ export function Sidebar() {
                         stroke="white"
                         strokeWidth="1"
                     />
+                    <path
+                        d="M0,160 Q50,110 100,160 T200,160"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="0.5"
+                    />
                 </svg>
             </div>
 
             <div className="relative flex h-full flex-col">
                 {/* Logo */}
-                <div className="flex h-16 items-center px-6">
-                    <Link href="/dashboard" className="flex items-center gap-2">
-                        <Building2 className="h-6 w-6 text-violet-500" />
+                <div className="flex h-16 items-center px-6 border-b border-white/10">
+                    <Link href="/dashboard" className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-600">
+                            <Building2 className="h-5 w-5 text-white" />
+                        </div>
                         <span className="text-xl font-bold text-white">PropertyHub</span>
                     </Link>
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 space-y-1 px-3 py-4">
+                <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
                     {filteredItems.map((item) => {
-                        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                        const isActive = item.href === '/dashboard'
+                            ? pathname === '/dashboard'
+                            : pathname === item.href || pathname.startsWith(`${item.href}/`);
                         const Icon = item.icon;
 
                         return (
@@ -107,9 +117,9 @@ export function Sidebar() {
                                 key={item.href}
                                 href={item.href}
                                 className={cn(
-                                    'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all',
+                                    'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
                                     isActive
-                                        ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/30'
+                                        ? 'bg-gradient-to-r from-sky-500 to-sky-600 text-white shadow-lg shadow-sky-500/30'
                                         : 'text-gray-300 hover:bg-white/10 hover:text-white'
                                 )}
                             >
@@ -123,18 +133,20 @@ export function Sidebar() {
                 {/* Footer */}
                 <div className="border-t border-white/10 p-4">
                     <div className="flex items-center justify-center gap-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-gray-400 hover:text-white hover:bg-white/10"
-                        >
-                            <User className="h-5 w-5" />
-                        </Button>
+                        <Link href="/dashboard/settings/company">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-gray-400 hover:text-white hover:bg-white/10 rounded-full"
+                            >
+                                <User className="h-5 w-5" />
+                            </Button>
+                        </Link>
                         <Link href="/dashboard/settings">
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="text-gray-400 hover:text-white hover:bg-white/10"
+                                className="text-gray-400 hover:text-white hover:bg-white/10 rounded-full"
                             >
                                 <Settings className="h-5 w-5" />
                             </Button>
@@ -143,7 +155,7 @@ export function Sidebar() {
                             variant="ghost"
                             size="icon"
                             onClick={signOut}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-full"
                         >
                             <LogOut className="h-5 w-5" />
                         </Button>

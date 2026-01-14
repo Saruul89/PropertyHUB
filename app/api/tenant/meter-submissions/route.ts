@@ -141,5 +141,32 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Get tenant name and fee type name for notification
+    const { data: tenantInfo } = await supabase
+        .from('tenants')
+        .select('name')
+        .eq('id', tenant.id)
+        .single();
+
+    const { data: feeType } = await supabase
+        .from('fee_types')
+        .select('name')
+        .eq('id', fee_type_id)
+        .single();
+
+    // Create in-app notification for company users
+    await supabase.from('notifications').insert({
+        company_id: tenant.company_id,
+        recipient_type: 'company_user',
+        recipient_id: tenant.company_id, // Will be filtered by company_id
+        type: 'reminder',
+        title: 'Тоолуурын заалт илгээгдлээ',
+        message: `${tenantInfo?.name || 'Оршин суугч'} ${feeType?.name || 'тоолуур'}-ын заалт илгээлээ: ${submitted_reading}`,
+        channel: 'in_app',
+        status: 'sent',
+        related_type: 'meter_submission',
+        related_id: data.id,
+    });
+
     return NextResponse.json(data, { status: 201 });
 }

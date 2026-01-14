@@ -21,6 +21,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
 
+    // Auto-expire leases that have passed their end_date
+    await supabase.rpc('expire_ended_leases');
+
     const searchParams = req.nextUrl.searchParams;
     const status = searchParams.get('status');
     const propertyId = searchParams.get('property_id');

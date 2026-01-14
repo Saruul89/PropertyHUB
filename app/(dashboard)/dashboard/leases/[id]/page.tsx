@@ -277,11 +277,11 @@ export default function LeaseDetailPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ja-JP");
+    return new Date(dateString).toLocaleDateString("mn-MN");
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("ja-JP").format(amount);
+    return new Intl.NumberFormat("mn-MN").format(amount);
   };
 
   if (loading || !lease) {
@@ -459,13 +459,13 @@ export default function LeaseDetailPage() {
                     <div>
                       <div className="text-sm text-gray-500">Сарын түрээс</div>
                       <div className="font-medium">
-                        ¥{formatCurrency(lease.monthly_rent)}
+                        ₮{formatCurrency(lease.monthly_rent)}
                       </div>
                     </div>
                     <div>
                       <div className="text-sm text-gray-500">Барьцаа</div>
                       <div className="font-medium">
-                        ¥{formatCurrency(lease.deposit)}
+                        ₮{formatCurrency(lease.deposit)}
                       </div>
                     </div>
                     <div>

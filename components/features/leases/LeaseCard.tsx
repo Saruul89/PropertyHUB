@@ -19,11 +19,11 @@ export function LeaseCard({ lease }: LeaseCardProps) {
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-gray-400" />
           <span className="font-medium">
-            {lease.unit?.property?.name || "物件名不明"}
+            {lease.unit?.property?.name || "Барилгын нэр тодорхойгүй"}
           </span>
           <span className="text-gray-500">-</span>
           <Home className="h-4 w-4 text-gray-400" />
-          <span>{lease.unit?.unit_number || "өрөөний дугаар不明"}</span>
+          <span>{lease.unit?.unit_number || "Өрөөний дугаар тодорхойгүй"}</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Calendar className="h-4 w-4" />
@@ -36,7 +36,7 @@ export function LeaseCard({ lease }: LeaseCardProps) {
       <div className="text-right">
         <LeaseStatusBadge status={lease.status} />
         <p className="mt-1 font-medium">
-          ₮{lease.monthly_rent.toLocaleString()}/月
+          ₮{lease.monthly_rent.toLocaleString()}/сар
         </p>
       </div>
     </div>

@@ -1,15 +1,14 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks";
 import { TenantSidebar } from "@/components/layout/tenant-sidebar";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { AuthProvider } from "@/providers/auth-provider";
+import { QueryProvider } from "@/providers/query-provider";
+import { Loading } from "@/components/ui/loading";
 
-export default function TenantLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function TenantLayoutContent({ children }: { children: React.ReactNode }) {
   const { loading, user, role } = useAuth();
   const router = useRouter();
 
@@ -29,11 +28,7 @@ export default function TenantLayout({
   }, [loading, user, role, router]);
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-gray-500">Ачааллаж байна...</div>
-      </div>
-    );
+    return <Loading fullPage />;
   }
 
   if (!user || role !== "tenant") {
@@ -45,5 +40,19 @@ export default function TenantLayout({
       <TenantSidebar />
       <main className="ml-64">{children}</main>
     </div>
+  );
+}
+
+export default function TenantLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <QueryProvider>
+      <AuthProvider>
+        <TenantLayoutContent>{children}</TenantLayoutContent>
+      </AuthProvider>
+    </QueryProvider>
   );
 }

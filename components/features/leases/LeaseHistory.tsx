@@ -16,11 +16,11 @@ export function LeaseHistory({ leases }: LeaseHistoryProps) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>契約履歴</CardTitle>
+                <CardTitle>Гэрээний түүх</CardTitle>
             </CardHeader>
             <CardContent>
                 {leases.length === 0 ? (
-                    <p className="text-gray-500">契約履歴がありません</p>
+                    <p className="text-gray-500">Гэрээний түүх байхгүй</p>
                 ) : (
                     <div className="space-y-4">
                         {leases.map((lease) => (

@@ -245,14 +245,14 @@ export default function MeterReadingsHistoryPage() {
 
       // Create CSV content
       const headers = [
-        "日付",
-        "物件名",
-        "өрөөний дугаар",
-        "料金タイプ",
-        "前回値",
-        "今回値",
-        "使用量",
-        "金額",
+        "Огноо",
+        "Барилгын нэр",
+        "Өрөөний дугаар",
+        "Төлбөрийн төрөл",
+        "Өмнөх утга",
+        "Одоогийн утга",
+        "Хэрэглээ",
+        "Дүн",
       ];
       const rows = readings.map((r) => [
         r.reading_date,
@@ -294,14 +294,14 @@ export default function MeterReadingsHistoryPage() {
   if (!hasMeterReadings) {
     return (
       <>
-        <Header title="メーター履歴" />
-        <div className="p-6">
+        <Header title="Тоолуурын түүх" />
+        <div className="p-4 md:p-6">
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <History className="mb-4 h-12 w-12 text-gray-400" />
-              <p className="text-gray-600">メーター機能は利用できません</p>
+              <p className="text-gray-600">Тоолуурын функц идэвхгүй байна</p>
               <p className="text-sm text-gray-500">
-                この機能を有効にするには管理者にお問い合わせください
+                Энэ функцийг идэвхжүүлэхийн тулд админтай холбогдоно уу
               </p>
             </CardContent>
           </Card>
@@ -312,22 +312,23 @@ export default function MeterReadingsHistoryPage() {
 
   return (
     <>
-      <Header title="メーター履歴" />
-      <div className="p-6">
+      <Header title="Тоолуурын түүх" />
+      <div className="p-4 md:p-6">
         {/* Back Link and Actions */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/dashboard/meter-readings">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              メーター入力に戻る
+              Тоолуур бүртгэл рүү буцах
             </Button>
           </Link>
           <Button
             onClick={exportToCSV}
             disabled={exporting || totalCount === 0}
+            className="w-full sm:w-auto"
           >
             <Download className="mr-2 h-4 w-4" />
-            {exporting ? "エクスポート中..." : "CSVダウンロード"}
+            {exporting ? "Экспортлож байна..." : "CSV татах"}
           </Button>
         </div>
 
@@ -337,18 +338,18 @@ export default function MeterReadingsHistoryPage() {
             <div className="flex items-center gap-2 mb-4">
               <Filter className="h-4 w-4 text-gray-400" />
               <span className="text-sm font-medium text-gray-700">
-                フィルター
+                Шүүлтүүр
               </span>
             </div>
-            <div className="grid gap-4 md:grid-cols-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-5">
               <div>
-                <label className="mb-1 block text-sm text-gray-600">物件</label>
+                <label className="mb-1 block text-sm text-gray-600">Барилга</label>
                 <select
                   value={selectedPropertyId}
                   onChange={(e) => setSelectedPropertyId(e.target.value)}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="">すべて</option>
+                  <option value="">Бүгд</option>
                   {properties.map((property) => (
                     <option key={property.id} value={property.id}>
                       {property.name}
@@ -357,14 +358,14 @@ export default function MeterReadingsHistoryPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm text-gray-600">部屋</label>
+                <label className="mb-1 block text-sm text-gray-600">Өрөө</label>
                 <select
                   value={selectedUnitId}
                   onChange={(e) => setSelectedUnitId(e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
                   disabled={!selectedPropertyId}
                 >
-                  <option value="">すべて</option>
+                  <option value="">{selectedPropertyId ? "Бүгд" : "Эхлээд барилга сонгоно уу"}</option>
                   {units.map((unit) => (
                     <option key={unit.id} value={unit.id}>
                       {unit.unit_number}
@@ -374,14 +375,14 @@ export default function MeterReadingsHistoryPage() {
               </div>
               <div>
                 <label className="mb-1 block text-sm text-gray-600">
-                  料金タイプ
+                  Төлбөрийн төрөл
                 </label>
                 <select
                   value={selectedFeeTypeId}
                   onChange={(e) => setSelectedFeeTypeId(e.target.value)}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="">すべて</option>
+                  <option value="">Бүгд</option>
                   {feeTypes.map((feeType) => (
                     <option key={feeType.id} value={feeType.id}>
                       {feeType.name}
@@ -391,7 +392,7 @@ export default function MeterReadingsHistoryPage() {
               </div>
               <div>
                 <label className="mb-1 block text-sm text-gray-600">
-                  開始月
+                  Эхлэх сар
                 </label>
                 <input
                   type="month"
@@ -402,7 +403,7 @@ export default function MeterReadingsHistoryPage() {
               </div>
               <div>
                 <label className="mb-1 block text-sm text-gray-600">
-                  終了月
+                  Дуусах сар
                 </label>
                 <input
                   type="month"
@@ -417,7 +418,7 @@ export default function MeterReadingsHistoryPage() {
 
         {/* Results Summary */}
         <div className="mb-4 text-sm text-gray-600">
-          {totalCount}件の履歴が見つかりました
+          {totalCount} түүх олдлоо
         </div>
 
         {/* Meter Readings Table */}
@@ -427,49 +428,49 @@ export default function MeterReadingsHistoryPage() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <History className="mb-4 h-12 w-12 text-gray-400" />
-              <p className="text-gray-600">該当する履歴がありません</p>
+              <p className="text-gray-600">Тохирох түүх олдсонгүй</p>
               <p className="text-sm text-gray-500">
-                フィルター条件を変更してください
+                Шүүлтүүрийн нөхцөлийг өөрчилнө үү
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="overflow-hidden rounded-lg border bg-white">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-lg border bg-white">
+            <table className="w-full min-w-[800px]">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
-                    日付
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 md:px-6">
+                    Огноо
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
-                    物件・部屋
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 md:px-6">
+                    Барилга・Өрөө
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
-                    料金タイプ
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 md:px-6">
+                    Төлбөрийн төрөл
                   </th>
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
-                    前回値
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 md:px-6">
+                    Өмнөх
                   </th>
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
-                    今回値
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 md:px-6">
+                    Одоогийн
                   </th>
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
-                    使用量
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 md:px-6">
+                    Хэрэглээ
                   </th>
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500">
-                    金額
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 md:px-6">
+                    Дүн
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {meterReadings.map((reading) => (
                   <tr key={reading.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-4 py-4 text-sm md:px-6">
                       {new Date(reading.reading_date).toLocaleDateString(
-                        "ja-JP"
+                        "mn-MN"
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4 md:px-6">
                       <div className="text-sm">
                         <p className="font-medium">
                           {reading.unit?.property?.name}
@@ -479,23 +480,23 @@ export default function MeterReadingsHistoryPage() {
                         </p>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4 md:px-6">
                       <span className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                         {reading.fee_type?.name}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right font-mono text-sm">
+                    <td className="px-4 py-4 text-right font-mono text-sm md:px-6">
                       {reading.previous_reading.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 text-right font-mono text-sm">
+                    <td className="px-4 py-4 text-right font-mono text-sm md:px-6">
                       {reading.current_reading.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 py-4 text-right md:px-6">
                       <span className="font-medium text-blue-600">
                         {reading.consumption.toLocaleString()}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right font-medium">
+                    <td className="px-4 py-4 text-right font-medium md:px-6">
                       ₮{reading.total_amount.toLocaleString()}
                     </td>
                   </tr>
@@ -507,10 +508,10 @@ export default function MeterReadingsHistoryPage() {
 
         {/* Pagination */}
         {!loading && totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
             <p className="text-sm text-gray-500">
-              {totalCount}件中 {currentPage * ITEMS_PER_PAGE + 1} -{" "}
-              {Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalCount)}件を表示
+              Нийт {totalCount}-с {currentPage * ITEMS_PER_PAGE + 1} -{" "}
+              {Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalCount)} харуулж байна
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -520,7 +521,7 @@ export default function MeterReadingsHistoryPage() {
                 disabled={currentPage === 0}
               >
                 <ChevronLeft className="h-4 w-4" />
-                前へ
+                Өмнөх
               </Button>
               <span className="px-3 text-sm">
                 {currentPage + 1} / {totalPages}
@@ -533,7 +534,7 @@ export default function MeterReadingsHistoryPage() {
                 }
                 disabled={currentPage >= totalPages - 1}
               >
-                次へ
+                Дараах
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

@@ -10,7 +10,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { TrendingUp, Receipt } from 'lucide-react';
 
 type FeeTypeData = {
   fee_name: string;
@@ -29,7 +30,6 @@ export const MonthlyRevenueChart = ({
   totalBilled,
   totalPaid,
 }: MonthlyRevenueChartProps) => {
-  // Prepare data for the main chart
   const summaryData = [
     {
       name: 'Энэ сар',
@@ -38,87 +38,184 @@ export const MonthlyRevenueChart = ({
     },
   ];
 
-  // Prepare fee type breakdown data
   const feeData = feeTypeData.slice(0, 6).map((item) => ({
-    name: item.fee_name.length > 15 ? item.fee_name.slice(0, 15) + '...' : item.fee_name,
+    name: item.fee_name.length > 12 ? item.fee_name.slice(0, 12) + '...' : item.fee_name,
     fullName: item.fee_name,
     amount: item.total_amount,
     count: item.count,
   }));
 
-  const formatCurrency = (value: number) => `₮${(value / 1000).toFixed(0)}K`;
+  const formatCurrency = (value: number) => {
+    if (value >= 1000000) return `₮${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `₮${(value / 1000).toFixed(0)}K`;
+    return `₮${value}`;
+  };
+
+  const collectionPercentage = totalBilled > 0
+    ? ((totalPaid / totalBilled) * 100).toFixed(1)
+    : '0';
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {/* Summary Chart */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Нэхэмжлэл ба Төлөлт</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TrendingUp className="h-4 w-4 text-blue-600" />
+                Нэхэмжлэл ба Төлөлт
+              </CardTitle>
+              <CardDescription>
+                Цуглуулалт: {collectionPercentage}%
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
+          <div className="h-48 sm:h-56 md:h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={summaryData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tickFormatter={formatCurrency} />
-                <YAxis type="category" dataKey="name" width={80} />
+              <BarChart data={summaryData} layout="vertical" margin={{ left: 0, right: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                <XAxis
+                  type="number"
+                  tickFormatter={formatCurrency}
+                  tick={{ fontSize: 11 }}
+                  axisLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={60}
+                  tick={{ fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip
                   formatter={(value) => [`₮${Number(value ?? 0).toLocaleString()}`, undefined]}
                   labelStyle={{ color: '#374151' }}
+                  contentStyle={{
+                    borderRadius: '8px',
+                    border: '1px solid #e5e7eb',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                  }}
                 />
-                <Legend />
+                <Legend
+                  wrapperStyle={{ fontSize: '12px' }}
+                  iconType="circle"
+                />
                 <Bar
                   dataKey="Нийт нэхэмжлэл"
                   fill="#3b82f6"
-                  radius={[0, 4, 4, 0]}
+                  radius={[0, 6, 6, 0]}
+                  barSize={28}
                 />
                 <Bar
                   dataKey="Төлөгдсөн"
                   fill="#22c55e"
-                  radius={[0, 4, 4, 0]}
+                  radius={[0, 6, 6, 0]}
+                  barSize={28}
                 />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+
+          {/* Summary stats below chart for mobile */}
+          <div className="mt-4 grid grid-cols-2 gap-3 border-t pt-4 md:hidden">
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">Нийт</p>
+              <p className="text-lg font-semibold text-blue-600">
+                ₮{totalBilled.toLocaleString()}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">Төлөгдсөн</p>
+              <p className="text-lg font-semibold text-green-600">
+                ₮{totalPaid.toLocaleString()}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Fee Type Breakdown */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Төлбөрийн төрлөөр</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Receipt className="h-4 w-4 text-indigo-600" />
+            Төлбөрийн төрлөөр
+          </CardTitle>
+          <CardDescription>
+            {feeData.length} төрлийн төлбөр
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {feeData.length === 0 ? (
-            <div className="flex h-64 items-center justify-center text-gray-500">
-              Мэдээлэл байхгүй
+            <div className="flex h-48 flex-col items-center justify-center text-center sm:h-56 md:h-64">
+              <Receipt className="mb-2 h-10 w-10 text-gray-300" />
+              <p className="text-sm text-muted-foreground">
+                Төлбөрийн мэдээлэл байхгүй
+              </p>
             </div>
           ) : (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={feeData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" tickFormatter={formatCurrency} />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={100}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip
-                    formatter={(value) => [`₮${Number(value ?? 0).toLocaleString()}`, undefined]}
-                    labelFormatter={(_label, payload) => {
-                      if (payload && payload[0]) {
-                        return payload[0].payload.fullName;
-                      }
-                      return '';
-                    }}
-                    labelStyle={{ color: '#374151' }}
-                  />
-                  <Bar dataKey="amount" fill="#6366f1" radius={[0, 4, 4, 0]} name="Дүн" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <>
+              <div className="h-48 sm:h-56 md:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={feeData}
+                    layout="vertical"
+                    margin={{ left: 0, right: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                    <XAxis
+                      type="number"
+                      tickFormatter={formatCurrency}
+                      tick={{ fontSize: 11 }}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={85}
+                      tick={{ fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      formatter={(value) => [`₮${Number(value ?? 0).toLocaleString()}`, 'Дүн']}
+                      labelFormatter={(_label, payload) => {
+                        if (payload && payload[0]) {
+                          const data = payload[0].payload;
+                          return `${data.fullName} (${data.count} ширхэг)`;
+                        }
+                        return '';
+                      }}
+                      contentStyle={{
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                      }}
+                    />
+                    <Bar
+                      dataKey="amount"
+                      fill="#6366f1"
+                      radius={[0, 6, 6, 0]}
+                      barSize={20}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Mobile-friendly list view */}
+              <div className="mt-4 space-y-2 border-t pt-4 md:hidden">
+                {feeData.slice(0, 4).map((item) => (
+                  <div key={item.name} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{item.fullName}</span>
+                    <span className="font-medium">₮{item.amount.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

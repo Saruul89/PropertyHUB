@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/client';
 import { Building2, Search, ChevronRight, Settings, ToggleLeft, ToggleRight } from 'lucide-react';
+import { AdminCompaniesSkeleton } from '@/components/skeletons';
 import Link from 'next/link';
 import type { Company, Subscription } from '@/types';
 
@@ -149,7 +150,7 @@ export default function CompaniesPage() {
                 </CardHeader>
                 <CardContent>
                     {loading ? (
-                        <div className="text-center py-8 text-gray-500">Ачааллаж байна...</div>
+                        <AdminCompaniesSkeleton />
                     ) : filteredCompanies.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
                             {searchQuery ? 'Тохирох компани олдсонгүй' : 'Компани бүртгэгдээгүй байна'}

@@ -13,11 +13,12 @@ import { useFeature } from "@/hooks";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { MAINTENANCE_CATEGORIES } from "@/lib/constants/maintenance";
 
 const maintenanceSchema = z.object({
-  unit_id: z.string().min(1, "ユニットを選択してください"),
+  unit_id: z.string().min(1, "Өрөө сонгоно уу"),
   tenant_id: z.string().optional(),
-  title: z.string().min(1, "タイトルは必須です"),
+  title: z.string().min(1, "Гарчиг оруулна уу"),
   description: z.string().optional(),
   priority: z.enum(["low", "normal", "high", "urgent"]),
   category: z.string().optional(),
@@ -33,17 +34,6 @@ type MaintenanceFormData = z.infer<typeof maintenanceSchema>;
 interface UnitWithProperty extends Unit {
   property: Property;
 }
-
-const categories = [
-  "Устай холбоотой",
-  "Цахилгаан",
-  "Агааржуулалт",
-  "Хаалга цонх",
-  "Хана шал тааз",
-  "Бохирын шугам",
-  "Security",
-  "Бусад",
-];
 
 export default function NewMaintenancePage() {
   const router = useRouter();
@@ -199,7 +189,7 @@ export default function NewMaintenancePage() {
   if (fetching) {
     return (
       <>
-        <Header title="新規Засвартай" showBack />
+        <Header title="Шинэ засварын хүсэлт" showBack />
         <div className="flex h-64 items-center justify-center">
           <div className="text-gray-500">Ачааллаж байна...</div>
         </div>
@@ -209,11 +199,11 @@ export default function NewMaintenancePage() {
 
   return (
     <>
-      <Header title="新規Засвартай" showBack />
+      <Header title="Шинэ засварын хүсэлт" showBack />
       <div className="p-6">
         <Card className="mx-auto max-w-2xl">
           <CardHeader>
-            <CardTitle>Засвартайリクエストを作成</CardTitle>
+            <CardTitle>Засварын хүсэлт үүсгэх</CardTitle>
           </CardHeader>
           <CardContent>
             {error && (
@@ -225,7 +215,7 @@ export default function NewMaintenancePage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Property Filter */}
               <div>
-                <Label>物件で絞り込み</Label>
+                <Label>Барилгаар шүүх</Label>
                 <select
                   className="mt-1 w-full rounded-md border p-2"
                   value={selectedProperty}
@@ -234,7 +224,7 @@ export default function NewMaintenancePage() {
                     setValue("unit_id", "");
                   }}
                 >
-                  <option value="">全ての物件</option>
+                  <option value="">Бүх барилга</option>
                   {properties.map((property) => (
                     <option key={property.id} value={property.id}>
                       {property.name}
@@ -245,13 +235,13 @@ export default function NewMaintenancePage() {
 
               {/* Unit Selection */}
               <div>
-                <Label htmlFor="unit_id">ユニット</Label>
+                <Label htmlFor="unit_id">Өрөө</Label>
                 <select
                   id="unit_id"
                   {...register("unit_id")}
                   className="mt-1 w-full rounded-md border p-2"
                 >
-                  <option value="">ユニットを選択</option>
+                  <option value="">Өрөө сонгох</option>
                   {filteredUnits.map((unit) => (
                     <option key={unit.id} value={unit.id}>
                       {unit.property.name} - {unit.unit_number}
@@ -267,11 +257,11 @@ export default function NewMaintenancePage() {
 
               {/* Title */}
               <div>
-                <Label htmlFor="title">タイトル</Label>
+                <Label htmlFor="title">Гарчиг</Label>
                 <Input
                   id="title"
                   {...register("title")}
-                  placeholder="例: エアコン故障"
+                  placeholder="Жишээ: Агааржуулалт эвдэрсэн"
                 />
                 {errors.title && (
                   <p className="mt-1 text-sm text-red-500">
@@ -283,14 +273,14 @@ export default function NewMaintenancePage() {
               {/* Category & Priority */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Label htmlFor="category">カテゴリ</Label>
+                  <Label htmlFor="category">Ангилал</Label>
                   <select
                     id="category"
                     {...register("category")}
                     className="mt-1 w-full rounded-md border p-2"
                   >
-                    <option value="">カテゴリを選択</option>
-                    {categories.map((cat) => (
+                    <option value="">Ангилал сонгох</option>
+                    {MAINTENANCE_CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
                       </option>
@@ -298,28 +288,28 @@ export default function NewMaintenancePage() {
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="priority">優先度</Label>
+                  <Label htmlFor="priority">Яаралтай эсэх</Label>
                   <select
                     id="priority"
                     {...register("priority")}
                     className="mt-1 w-full rounded-md border p-2"
                   >
-                    <option value="low">低</option>
-                    <option value="normal">中</option>
-                    <option value="high">高</option>
-                    <option value="urgent">緊急</option>
+                    <option value="low">Бага</option>
+                    <option value="normal">Дунд</option>
+                    <option value="high">Өндөр</option>
+                    <option value="urgent">Яаралтай</option>
                   </select>
                 </div>
               </div>
 
               {/* Description */}
               <div>
-                <Label htmlFor="description">詳細説明</Label>
+                <Label htmlFor="description">Дэлгэрэнгүй тайлбар</Label>
                 <textarea
                   id="description"
                   {...register("description")}
                   className="mt-1 min-h-[100px] w-full rounded-md border p-2"
-                  placeholder="問題の詳細を記入してください..."
+                  placeholder="Асуудлын дэлгэрэнгүйг бичнэ үү..."
                 />
               </div>
 
@@ -327,22 +317,22 @@ export default function NewMaintenancePage() {
               {hasMaintenanceVendor && (
                 <>
                   <div className="border-t pt-4">
-                    <h3 className="mb-4 font-medium">業者情報</h3>
+                    <h3 className="mb-4 font-medium">Гүйцэтгэгчийн мэдээлэл</h3>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <Label htmlFor="vendor_name">業者名</Label>
+                        <Label htmlFor="vendor_name">Гүйцэтгэгчийн нэр</Label>
                         <Input
                           id="vendor_name"
                           {...register("vendor_name")}
-                          placeholder="例: ABC設備"
+                          placeholder="Жишээ: АВС ББСБ"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="vendor_phone">業者電話番号</Label>
+                        <Label htmlFor="vendor_phone">Гүйцэтгэгчийн утас</Label>
                         <Input
                           id="vendor_phone"
                           {...register("vendor_phone")}
-                          placeholder="例: 03-1234-5678"
+                          placeholder="Жишээ: 99112233"
                         />
                       </div>
                     </div>
@@ -350,7 +340,7 @@ export default function NewMaintenancePage() {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <Label htmlFor="estimated_cost">見積金額</Label>
+                      <Label htmlFor="estimated_cost">Төсөвт өртөг</Label>
                       <Input
                         id="estimated_cost"
                         type="number"
@@ -361,7 +351,7 @@ export default function NewMaintenancePage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="scheduled_date">予定日</Label>
+                      <Label htmlFor="scheduled_date">Товлосон огноо</Label>
                       <Input
                         id="scheduled_date"
                         type="date"
@@ -379,7 +369,7 @@ export default function NewMaintenancePage() {
                   id="notes"
                   {...register("notes")}
                   className="mt-1 min-h-[80px] w-full rounded-md border p-2"
-                  placeholder="その他のメモ..."
+                  placeholder="Бусад тэмдэглэл..."
                 />
               </div>
 
@@ -389,10 +379,10 @@ export default function NewMaintenancePage() {
                   variant="outline"
                   onClick={() => router.back()}
                 >
-                  Цуцлах
+                  Болих
                 </Button>
                 <Button type="submit" disabled={loading}>
-                  {loading ? "作成中..." : "リクエストを作成"}
+                  {loading ? "Үүсгэж байна..." : "Хүсэлт үүсгэх"}
                 </Button>
               </div>
             </form>

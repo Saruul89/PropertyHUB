@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { Building2, Users, Home, CreditCard, TrendingUp, AlertCircle } from 'lucide-react';
+import { AdminDashboardSkeleton } from '@/components/skeletons';
 import Link from 'next/link';
 import type { Company, Subscription } from '@/types';
 
@@ -146,7 +147,7 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                     {loading ? (
-                        <div className="text-gray-500">Ачааллаж байна...</div>
+                        <AdminDashboardSkeleton />
                     ) : recentCompanies.length === 0 ? (
                         <div className="text-gray-500">Компани бүртгэгдээгүй байна</div>
                     ) : (
