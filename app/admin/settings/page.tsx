@@ -33,9 +33,9 @@ interface SystemSettings {
 }
 
 const defaultPlans: PlansConfig = {
-  free: { max_properties: 1, max_units: 50, price: 0 },
-  basic: { max_properties: 5, max_units: 200, price: 50000 },
-  pro: { max_properties: 20, max_units: 1000, price: 150000 },
+  starter: { max_properties: 1, max_units: 50, price: 20 },
+  basic: { max_properties: 1, max_units: 150, price: 50 },
+  pro: { max_properties: 3, max_units: 500, price: 100 },
   enterprise: { max_properties: -1, max_units: -1, price: 0 },
 };
 
@@ -111,7 +111,7 @@ export default function AdminSettingsPage() {
 
   const updatePlan = (
     plan: keyof PlansConfig,
-    field: keyof PlansConfig["free"],
+    field: keyof PlansConfig["starter"],
     value: number
   ) => {
     setSettings((prev) => ({
@@ -150,7 +150,9 @@ export default function AdminSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Системийн тохиргоо</h1>
-          <p className="text-gray-600">PropertyHub-ийн ерөнхий тохиргоог удирдана</p>
+          <p className="text-gray-600">
+            PropertyHub-ийн ерөнхий тохиргоог удирдана
+          </p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
           <Save className="h-4 w-4 mr-2" />
@@ -238,59 +240,65 @@ export default function AdminSettingsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {(["free", "basic", "pro", "enterprise"] as const).map((plan) => (
-              <div key={plan} className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-4 capitalize">
-                  {plan === "free"
-                    ? "Free (Үнэгүй)"
-                    : plan === "basic"
-                    ? "Basic (Үндсэн)"
-                    : plan === "pro"
-                    ? "Pro (Мэргэжлийн)"
-                    : "Enterprise (Байгууллага)"}
-                </h4>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label>Хамгийн их барилгын тоо</Label>
-                    <Input
-                      type="number"
-                      value={settings.plans[plan].max_properties}
-                      onChange={(e) =>
-                        updatePlan(
-                          plan,
-                          "max_properties",
-                          parseInt(e.target.value) || 0
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Хамгийн их өрөөний тоо</Label>
-                    <Input
-                      type="number"
-                      value={settings.plans[plan].max_units}
-                      onChange={(e) =>
-                        updatePlan(
-                          plan,
-                          "max_units",
-                          parseInt(e.target.value) || 0
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Сарын төлбөр (₮)</Label>
-                    <Input
-                      type="number"
-                      value={settings.plans[plan].price}
-                      onChange={(e) =>
-                        updatePlan(plan, "price", parseInt(e.target.value) || 0)
-                      }
-                    />
+            {(["starter", "basic", "pro", "enterprise"] as const).map(
+              (plan) => (
+                <div key={plan} className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-4 capitalize">
+                    {plan === "starter"
+                      ? "Starter (Жижиг)"
+                      : plan === "basic"
+                      ? "Basic (Үндсэн)"
+                      : plan === "pro"
+                      ? "Pro (Мэргэжлийн)"
+                      : "Enterprise (Байгууллага)"}
+                  </h4>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label>Хамгийн их барилгын тоо</Label>
+                      <Input
+                        type="number"
+                        value={settings.plans[plan].max_properties}
+                        onChange={(e) =>
+                          updatePlan(
+                            plan,
+                            "max_properties",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Хамгийн их өрөөний тоо</Label>
+                      <Input
+                        type="number"
+                        value={settings.plans[plan].max_units}
+                        onChange={(e) =>
+                          updatePlan(
+                            plan,
+                            "max_units",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Сарын төлбөр (₮)</Label>
+                      <Input
+                        type="number"
+                        value={settings.plans[plan].price}
+                        onChange={(e) =>
+                          updatePlan(
+                            plan,
+                            "price",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         </CardContent>
       </Card>
@@ -366,7 +374,9 @@ export default function AdminSettingsPage() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
             <div>
-              <p className="font-medium text-red-800">Өгөгдлийн санг дахин тохируулах</p>
+              <p className="font-medium text-red-800">
+                Өгөгдлийн санг дахин тохируулах
+              </p>
               <p className="text-sm text-red-600">
                 Бүх өгөгдлийг устгана (зөвхөн хөгжүүлэлтийн орчинд)
               </p>

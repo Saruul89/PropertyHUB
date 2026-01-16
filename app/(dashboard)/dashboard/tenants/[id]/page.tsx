@@ -12,9 +12,22 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { createClient } from '@/lib/supabase/client';
 import type { Tenant, Lease, Unit, Property } from '@/types';
-import { Phone, Home, Calendar, Copy, Building2 } from 'lucide-react';
+import { Phone, Home, Calendar, Copy, Building2, Plus } from 'lucide-react';
 
 const tenantSchema = z.object({
     name: z.string().min(1, 'Нэр заавал бөглөнө'),
@@ -33,6 +46,10 @@ type LeaseWithUnit = Lease & {
     unit?: Unit & { property?: Property };
 };
 
+type PropertyWithUnits = Property & {
+    units: Unit[];
+};
+
 export default function TenantDetailPage() {
     const router = useRouter();
     const params = useParams();
@@ -43,6 +60,15 @@ export default function TenantDetailPage() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+
+    // Assign room modal state
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [properties, setProperties] = useState<PropertyWithUnits[]>([]);
+    const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
+    const [selectedUnitId, setSelectedUnitId] = useState<string>('');
+    const [monthlyRent, setMonthlyRent] = useState<string>('');
+    const [assigningRoom, setAssigningRoom] = useState(false);
+    const [assignError, setAssignError] = useState<string | null>(null);
 
     const {
         register,
@@ -111,6 +137,99 @@ export default function TenantDetailPage() {
 
         setLoading(false);
     };
+
+    const fetchPropertiesWithVacantUnits = async () => {
+        const supabase = createClient();
+
+        const { data: propertiesData } = await supabase
+            .from('properties')
+            .select('*, units(*)')
+            .eq('is_active', true);
+
+        if (propertiesData) {
+            // Filter to only properties with vacant units
+            const propertiesWithVacant = propertiesData
+                .map((property: Property & { units: Unit[] }) => ({
+                    ...property,
+                    units: property.units.filter(
+                        (unit) => unit.status === 'vacant' && unit.is_active
+                    ),
+                }))
+                .filter((property: PropertyWithUnits) => property.units.length > 0);
+
+            setProperties(propertiesWithVacant);
+        }
+    };
+
+    const handleOpenAssignModal = () => {
+        setAssignError(null);
+        setSelectedPropertyId('');
+        setSelectedUnitId('');
+        setMonthlyRent('');
+        fetchPropertiesWithVacantUnits();
+        setAssignModalOpen(true);
+    };
+
+    const handlePropertyChange = (propertyId: string) => {
+        setSelectedPropertyId(propertyId);
+        setSelectedUnitId('');
+        const property = properties.find((p) => p.id === propertyId);
+        if (property && property.units.length > 0) {
+            setMonthlyRent(property.units[0].monthly_rent.toString());
+        }
+    };
+
+    const handleUnitChange = (unitId: string) => {
+        setSelectedUnitId(unitId);
+        const property = properties.find((p) => p.id === selectedPropertyId);
+        const unit = property?.units.find((u) => u.id === unitId);
+        if (unit) {
+            setMonthlyRent(unit.monthly_rent.toString());
+        }
+    };
+
+    const handleAssignRoom = async () => {
+        if (!selectedUnitId || !monthlyRent) {
+            setAssignError('Бүх талбарыг бөглөнө үү');
+            return;
+        }
+
+        setAssigningRoom(true);
+        setAssignError(null);
+
+        try {
+            const response = await fetch('/api/leases', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenant_id: tenantId,
+                    unit_id: selectedUnitId,
+                    start_date: new Date().toISOString().split('T')[0],
+                    monthly_rent: parseFloat(monthlyRent),
+                    deposit: 0,
+                    payment_due_day: 1,
+                    status: 'active',
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Өрөө хуваарилахад алдаа гарлаа');
+            }
+
+            setAssignModalOpen(false);
+            fetchTenant(); // Refresh data
+        } catch (err) {
+            setAssignError(err instanceof Error ? err.message : 'Алдаа гарлаа');
+        } finally {
+            setAssigningRoom(false);
+        }
+    };
+
+    const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
+    const hasActiveOrPendingLease = leases.some(
+        (lease) => lease.status === 'active' || lease.status === 'pending'
+    );
 
     const onSubmit = async (data: TenantFormData) => {
         setSaving(true);
@@ -325,8 +444,14 @@ export default function TenantDetailPage() {
 
                     {/* Leases Card */}
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Гэрээний түүх</CardTitle>
+                            {!hasActiveOrPendingLease && (
+                                <Button size="sm" onClick={handleOpenAssignModal}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Өрөө хуваарилах
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardContent>
                             {leases.length === 0 ? (
@@ -384,6 +509,94 @@ export default function TenantDetailPage() {
                     </Card>
                 </div>
             </div>
+
+            {/* Assign Room Modal */}
+            <Dialog open={assignModalOpen} onOpenChange={setAssignModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Өрөө хуваарилах</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {assignError && (
+                            <div className="rounded bg-red-50 p-3 text-sm text-red-600">
+                                {assignError}
+                            </div>
+                        )}
+
+                        <div>
+                            <Label>Барилга сонгох</Label>
+                            <Select
+                                value={selectedPropertyId}
+                                onValueChange={handlePropertyChange}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Барилга сонгоно уу" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {properties.map((property) => (
+                                        <SelectItem key={property.id} value={property.id}>
+                                            {property.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {properties.length === 0 && (
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Сул өрөөтэй барилга байхгүй
+                                </p>
+                            )}
+                        </div>
+
+                        {selectedProperty && (
+                            <div>
+                                <Label>Өрөө сонгох</Label>
+                                <Select
+                                    value={selectedUnitId}
+                                    onValueChange={handleUnitChange}
+                                >
+                                    <SelectTrigger className="mt-1">
+                                        <SelectValue placeholder="Өрөө сонгоно уу" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {selectedProperty.units.map((unit) => (
+                                            <SelectItem key={unit.id} value={unit.id}>
+                                                {unit.unit_number} - ₮{unit.monthly_rent.toLocaleString()}/сар
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {selectedUnitId && (
+                            <div>
+                                <Label>Сарын төлбөр</Label>
+                                <Input
+                                    type="number"
+                                    value={monthlyRent}
+                                    onChange={(e) => setMonthlyRent(e.target.value)}
+                                    className="mt-1"
+                                />
+                            </div>
+                        )}
+
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => setAssignModalOpen(false)}
+                            >
+                                Цуцлах
+                            </Button>
+                            <Button
+                                onClick={handleAssignRoom}
+                                disabled={!selectedUnitId || assigningRoom}
+                            >
+                                {assigningRoom ? 'Хадгалж байна...' : 'Хуваарилах'}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

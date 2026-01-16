@@ -44,12 +44,12 @@ export function MeterReadingForm({
 
     const value = parseFloat(currentReading);
     if (isNaN(value)) {
-      setError("有効な数値を入力してください");
+      setError("Хүчинтэй тоо оруулна уу");
       return;
     }
 
     if (value < previousReading) {
-      setError("前回の数値より小さい値は入力できません");
+      setError("Өмнөх утгаас бага утга оруулах боломжгүй");
       return;
     }
 
@@ -60,7 +60,7 @@ export function MeterReadingForm({
         notes: notes || undefined,
       });
     } catch (err) {
-      setError("Хадгалахに失敗しました");
+      setError("Хадгалахад алдаа гарлаа");
     } finally {
       setSubmitting(false);
     }
@@ -80,7 +80,7 @@ export function MeterReadingForm({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="rounded-lg bg-gray-50 p-3">
             <p className="text-sm text-gray-600">
-              前回値:{" "}
+              Өмнөх утга:{" "}
               <span className="font-bold">
                 {previousReading.toLocaleString()}
               </span>
@@ -88,7 +88,7 @@ export function MeterReadingForm({
           </div>
 
           <div>
-            <Label htmlFor="current_reading">今回の値</Label>
+            <Label htmlFor="current_reading">Одоогийн утга</Label>
             <Input
               id="current_reading"
               type="number"
@@ -112,13 +112,13 @@ export function MeterReadingForm({
           {isValidConsumption && consumption > 0 && (
             <div className="grid grid-cols-2 gap-4 rounded-lg bg-blue-50 p-3">
               <div>
-                <p className="text-sm text-gray-600">使用量</p>
+                <p className="text-sm text-gray-600">Хэрэглээ</p>
                 <p className="text-lg font-bold text-blue-600">
                   {consumption.toLocaleString()}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">金額</p>
+                <p className="text-sm text-gray-600">Дүн</p>
                 <p className="text-lg font-bold">
                   ₮{totalAmount.toLocaleString()}
                 </p>
@@ -127,12 +127,12 @@ export function MeterReadingForm({
           )}
 
           <div>
-            <Label htmlFor="notes">メモ（任意）</Label>
+            <Label htmlFor="notes">Тэмдэглэл (заавал биш)</Label>
             <Input
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Тэмдэглэлがあれば入力"
+              placeholder="Тэмдэглэл байвал оруулна уу"
               className="mt-1"
             />
           </div>
@@ -152,7 +152,7 @@ export function MeterReadingForm({
               disabled={submitting || !currentReading}
             >
               <Save className="mr-2 h-4 w-4" />
-              {submitting ? "Хадгалах中..." : "Хадгалах"}
+              {submitting ? "Хадгалж байна..." : "Хадгалах"}
             </Button>
           </div>
         </form>

@@ -47,10 +47,10 @@ export function DocumentUpload({
 
     const validateFile = (file: File): string | null => {
         if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-            return 'サポートされていないファイル形式です。PDF、Word、または画像ファイルを選択してください。';
+            return 'Дэмжигдээгүй файлын төрөл. PDF, Word эсвэл зургийн файл сонгоно уу.';
         }
         if (file.size > maxSizeBytes) {
-            return `ファイルサイズは${maxSizeBytes / 1024 / 1024}MB以下にしてください。`;
+            return `Файлын хэмжээ ${maxSizeBytes / 1024 / 1024}MB-ээс бага байх ёстой.`;
         }
         return null;
     };
@@ -139,7 +139,7 @@ export function DocumentUpload({
                 fileInputRef.current.value = '';
             }
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'アップロードに失敗しました';
+            const message = error instanceof Error ? error.message : 'Байршуулахад алдаа гарлаа';
             onError(message);
         } finally {
             setUploading(false);
@@ -196,17 +196,17 @@ export function DocumentUpload({
                     <>
                         <Upload className="mx-auto h-12 w-12 text-gray-400" />
                         <p className="mt-2 text-sm text-gray-600">
-                            ファイルをドラッグ&ドロップ、または
+                            Файлаа чирж тавих эсвэл
                         </p>
                         <Button
                             variant="outline"
                             className="mt-2"
                             onClick={() => fileInputRef.current?.click()}
                         >
-                            ファイルを選択
+                            Файл сонгох
                         </Button>
                         <p className="mt-2 text-xs text-gray-500">
-                            PDF, Word, 画像 (最大 {maxSizeBytes / 1024 / 1024}MB)
+                            PDF, Word, Зураг (Дээд хэмжээ {maxSizeBytes / 1024 / 1024}MB)
                         </p>
                     </>
                 )}
@@ -222,10 +222,10 @@ export function DocumentUpload({
             {/* Description */}
             {selectedFile && (
                 <div>
-                    <Label htmlFor="description">説明（任意）</Label>
+                    <Label htmlFor="description">Тайлбар (заавал биш)</Label>
                     <Input
                         id="description"
-                        placeholder="書類の説明を入力"
+                        placeholder="Баримт бичгийн тайлбарыг оруулна уу"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                     />
@@ -240,7 +240,7 @@ export function DocumentUpload({
                     className="w-full"
                 >
                     <Upload className="mr-2 h-4 w-4" />
-                    {uploading ? 'アップロード中...' : 'アップロード'}
+                    {uploading ? 'Байршуулж байна...' : 'Байршуулах'}
                 </Button>
             )}
         </div>

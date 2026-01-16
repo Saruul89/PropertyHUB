@@ -29,7 +29,7 @@ export function BillingPdfPreview({
     const printWindow = window.open("", "", "height=600,width=800");
     if (!printWindow) return;
 
-    printWindow.document.write("<html><head><title>請求書</title>");
+    printWindow.document.write("<html><head><title>Нэхэмжлэх</title>");
     printWindow.document.write("<style>");
     printWindow.document.write(`
             body { font-family: sans-serif; padding: 20px; }
@@ -52,7 +52,7 @@ export function BillingPdfPreview({
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("ja-JP", {
+    return new Date(dateStr).toLocaleDateString("mn-MN", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -60,7 +60,7 @@ export function BillingPdfPreview({
   };
 
   const formatMonth = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("ja-JP", {
+    return new Date(dateStr).toLocaleDateString("mn-MN", {
       year: "numeric",
       month: "long",
     });
@@ -71,7 +71,7 @@ export function BillingPdfPreview({
       <div className="flex gap-2">
         <Button variant="outline" onClick={handlePrint}>
           <Printer className="mr-2 h-4 w-4" />
-          印刷
+          Хэвлэх
         </Button>
       </div>
 
@@ -83,17 +83,17 @@ export function BillingPdfPreview({
         <div className="invoice">
           {/* Header */}
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold">請 求 書</h1>
+            <h1 className="text-3xl font-bold">НЭХЭМЖЛЭХ</h1>
             <p className="mt-2 text-gray-500">
-              請求番号: {billing.billing_number}
+              Нэхэмжлэхийн дугаар: {billing.billing_number}
             </p>
           </div>
 
           {/* Info Section */}
           <div className="mb-8 flex justify-between">
             <div className="w-1/2">
-              <p className="mb-2 text-sm text-gray-500">請求先</p>
-              <p className="text-lg font-medium">{tenant?.name} 様</p>
+              <p className="mb-2 text-sm text-gray-500">Нэхэмжлэгч</p>
+              <p className="text-lg font-medium">{tenant?.name}</p>
               {unit && (
                 <p className="text-gray-600">
                   {unit.property?.name} {unit.unit_number}
@@ -101,13 +101,13 @@ export function BillingPdfPreview({
               )}
             </div>
             <div className="w-1/3 text-right">
-              <p className="mb-2 text-sm text-gray-500">発行元</p>
-              <p className="font-medium">{company?.name || "管理会社"}</p>
+              <p className="mb-2 text-sm text-gray-500">Үүсгэгч</p>
+              <p className="font-medium">{company?.name || "Удирдлагын компани"}</p>
               {company?.address && (
                 <p className="text-sm text-gray-600">{company.address}</p>
               )}
               {company?.phone && (
-                <p className="text-sm text-gray-600">TEL: {company.phone}</p>
+                <p className="text-sm text-gray-600">Утас: {company.phone}</p>
               )}
             </div>
           </div>
@@ -115,17 +115,17 @@ export function BillingPdfPreview({
           {/* Dates */}
           <div className="mb-8 flex gap-8">
             <div>
-              <p className="text-sm text-gray-500">対象月</p>
+              <p className="text-sm text-gray-500">Тухайн сар</p>
               <p className="font-medium">
                 {formatMonth(billing.billing_month)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">発行日</p>
+              <p className="text-sm text-gray-500">Үүсгэсэн огноо</p>
               <p className="font-medium">{formatDate(billing.issue_date)}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">支払期限</p>
+              <p className="text-sm text-gray-500">Төлбөрийн хугацаа</p>
               <p className="font-medium">{formatDate(billing.due_date)}</p>
             </div>
           </div>
@@ -135,16 +135,16 @@ export function BillingPdfPreview({
             <thead>
               <tr className="border-b-2 border-gray-300">
                 <th className="pb-3 text-left text-sm font-medium text-gray-600">
-                  項目
+                  Нэр
                 </th>
                 <th className="pb-3 text-right text-sm font-medium text-gray-600">
-                  数量
+                  Тоо ширхэг
                 </th>
                 <th className="pb-3 text-right text-sm font-medium text-gray-600">
-                  単価
+                  Нэгж үнэ
                 </th>
                 <th className="pb-3 text-right text-sm font-medium text-gray-600">
-                  金額
+                  Дүн
                 </th>
               </tr>
             </thead>
@@ -174,7 +174,7 @@ export function BillingPdfPreview({
             <tfoot>
               <tr className="border-t-2 border-gray-300">
                 <td colSpan={3} className="py-3 text-right font-medium">
-                  小計
+                  Дэд дүн
                 </td>
                 <td className="py-3 text-right font-medium">
                   ₮{billing.subtotal.toLocaleString()}
@@ -183,7 +183,7 @@ export function BillingPdfPreview({
               {billing.tax_amount > 0 && (
                 <tr>
                   <td colSpan={3} className="py-3 text-right font-medium">
-                    税額
+                    Татвар
                   </td>
                   <td className="py-3 text-right font-medium">
                     ₮{billing.tax_amount.toLocaleString()}
@@ -192,7 +192,7 @@ export function BillingPdfPreview({
               )}
               <tr className="text-xl">
                 <td colSpan={3} className="py-4 text-right font-bold">
-                  合計
+                  Нийт
                 </td>
                 <td className="py-4 text-right font-bold">
                   ₮{billing.total_amount.toLocaleString()}
@@ -204,10 +204,10 @@ export function BillingPdfPreview({
           {/* Payment Info */}
           <div className="rounded-lg bg-gray-50 p-4">
             <p className="mb-2 font-medium">
-              お支払い期限: {formatDate(billing.due_date)}
+              Төлбөрийн хугацаа: {formatDate(billing.due_date)}
             </p>
             <p className="text-sm text-gray-600">
-              上記金額を期日までにお支払いください。
+              Дээрх дүнг хугацаанд нь төлнө үү.
             </p>
           </div>
 

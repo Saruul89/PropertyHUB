@@ -54,7 +54,7 @@ export function NotificationSettings({
       }
     } catch (error) {
       console.error("Failed to fetch notification settings:", error);
-      toast.error("通知設定の取得に失敗しました");
+      toast.error("Мэдэгдлийн тохиргоог авахад алдаа гарлаа");
     } finally {
       setLoading(false);
     }
@@ -70,14 +70,14 @@ export function NotificationSettings({
       });
 
       if (res.ok) {
-        toast.success("通知設定をХадгалахしました");
+        toast.success("Мэдэгдлийн тохиргоог хадгаллаа");
       } else {
         const error = await res.json();
-        toast.error(error.error || "Хадгалахに失敗しました");
+        toast.error(error.error || "Хадгалахад алдаа гарлаа");
       }
     } catch (error) {
       console.error("Failed to save notification settings:", error);
-      toast.error("Хадгалахに失敗しました");
+      toast.error("Хадгалахад алдаа гарлаа");
     } finally {
       setSaving(false);
     }
@@ -105,14 +105,14 @@ export function NotificationSettings({
         <CardHeader>
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            <CardTitle>メール通知</CardTitle>
+            <CardTitle>Имэйл мэдэгдэл</CardTitle>
           </div>
-          <CardDescription>入居者へのメール通知設定</CardDescription>
+          <CardDescription>Түрээслэгчид имэйл мэдэгдэл илгээх тохиргоо</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {!emailEnabled && (
             <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-              メール通知機能は現在のプランでは利用できません
+              Имэйл мэдэгдлийн функц одоогийн төлөвлөгөөнд байхгүй байна
             </div>
           )}
 
@@ -122,9 +122,9 @@ export function NotificationSettings({
           >
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>請求発行通知</Label>
+                <Label>Нэхэмжлэх үүсгэсэн мэдэгдэл</Label>
                 <p className="text-sm text-muted-foreground">
-                  請求書発行時に入居者へ通知
+                  Нэхэмжлэх үүсгэхэд түрээслэгчид мэдэгдэл илгээх
                 </p>
               </div>
               <Switch
@@ -140,9 +140,9 @@ export function NotificationSettings({
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>支払期限リマインダー</Label>
+                <Label>Төлбөрийн сануулга</Label>
                 <p className="text-sm text-muted-foreground">
-                  支払期限3日前に通知
+                  Төлбөрийн хугацааны 3 хоногийн өмнө мэдэгдэл
                 </p>
               </div>
               <Switch
@@ -158,9 +158,9 @@ export function NotificationSettings({
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>延滞通知</Label>
+                <Label>Хугацаа хэтэрсэн мэдэгдэл</Label>
                 <p className="text-sm text-muted-foreground">
-                  支払期限超過時に通知
+                  Төлбөрийн хугацаа хэтэрсэн үед мэдэгдэл
                 </p>
               </div>
               <Switch
@@ -176,9 +176,9 @@ export function NotificationSettings({
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>支払確認通知</Label>
+                <Label>Төлбөр баталгаажсан мэдэгдэл</Label>
                 <p className="text-sm text-muted-foreground">
-                  支払登録完了時に通知
+                  Төлбөр бүртгэл дуусахад мэдэгдэл
                 </p>
               </div>
               <Switch
@@ -194,9 +194,9 @@ export function NotificationSettings({
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>契約期限リマインダー</Label>
+                <Label>Гэрээний хугацааны сануулга</Label>
                 <p className="text-sm text-muted-foreground">
-                  契約終了30日前に通知
+                  Гэрээ дуусахаас 30 хоногийн өмнө мэдэгдэл
                 </p>
               </div>
               <Switch
@@ -216,25 +216,25 @@ export function NotificationSettings({
         <CardHeader>
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            <CardTitle>SMS通知</CardTitle>
+            <CardTitle>SMS мэдэгдэл</CardTitle>
           </div>
           <CardDescription>
-            入居者へのSMS通知設定（重要な通知のみ）
+            Түрээслэгчид SMS мэдэгдэл илгээх тохиргоо (чухал мэдэгдэл)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {!smsEnabled && (
             <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-              SMS通知機能は現在のプランでは利用できません
+              SMS мэдэгдлийн функц одоогийн төлөвлөгөөнд байхгүй байна
             </div>
           )}
 
           <div className="space-y-4" style={{ opacity: smsEnabled ? 1 : 0.5 }}>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>支払期限リマインダー</Label>
+                <Label>Төлбөрийн сануулга</Label>
                 <p className="text-sm text-muted-foreground">
-                  支払期限3日前にSMS通知
+                  Төлбөрийн хугацааны 3 хоногийн өмнө SMS мэдэгдэл
                 </p>
               </div>
               <Switch
@@ -250,9 +250,9 @@ export function NotificationSettings({
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>延滞通知</Label>
+                <Label>Хугацаа хэтэрсэн мэдэгдэл</Label>
                 <p className="text-sm text-muted-foreground">
-                  支払期限超過時にSMS通知
+                  Төлбөрийн хугацаа хэтэрсэн үед SMS мэдэгдэл
                 </p>
               </div>
               <Switch
@@ -268,9 +268,9 @@ export function NotificationSettings({
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>アカウント作成通知</Label>
+                <Label>Бүртгэл үүсгэсэн мэдэгдэл</Label>
                 <p className="text-sm text-muted-foreground">
-                  入居者登録時にログイン情報をSMS送信
+                  Түрээслэгч бүртгэхэд нэвтрэх мэдээллийг SMS-ээр илгээх
                 </p>
               </div>
               <Switch
@@ -288,12 +288,12 @@ export function NotificationSettings({
       {/* Sender Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>送信元設定</CardTitle>
-          <CardDescription>通知メールの送信元情報</CardDescription>
+          <CardTitle>Илгээгчийн тохиргоо</CardTitle>
+          <CardDescription>Мэдэгдлийн имэйл илгээгчийн мэдээлэл</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="sender_email">送信元メールアドレス</Label>
+            <Label htmlFor="sender_email">Илгээгчийн имэйл хаяг</Label>
             <Input
               id="sender_email"
               type="email"
@@ -302,20 +302,20 @@ export function NotificationSettings({
               onChange={(e) => updateSetting("sender_email", e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              空欄の場合はシステムデフォルトを使用
+              Хоосон үед системийн үндсэн утгыг ашиглана
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sender_name">送信元名</Label>
+            <Label htmlFor="sender_name">Илгээгчийн нэр</Label>
             <Input
               id="sender_name"
-              placeholder="管理会社名"
+              placeholder="Удирдлагын компанийн нэр"
               value={settings.sender_name || ""}
               onChange={(e) => updateSetting("sender_name", e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              メールの「差出人」に表示される名前
+              Имэйлийн "Илгээгч" хэсэгт харагдах нэр
             </p>
           </div>
         </CardContent>
@@ -327,7 +327,7 @@ export function NotificationSettings({
           {saving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Хадгалах中...
+              Хадгалж байна...
             </>
           ) : (
             <>

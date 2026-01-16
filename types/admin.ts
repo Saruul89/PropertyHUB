@@ -26,7 +26,7 @@ export type AuditTargetType = 'company' | 'admin' | 'settings' | 'subscription';
 export type SubscriptionStatus = 'active' | 'trial' | 'past_due' | 'cancelled' | 'suspended';
 
 // Захиалгын төлөвлөгөө
-export type SubscriptionPlan = 'free' | 'basic' | 'pro' | 'enterprise';
+export type SubscriptionPlan = 'starter' | 'basic' | 'pro' | 'enterprise';
 
 // Системийн админ
 export interface SystemAdmin {
@@ -75,7 +75,7 @@ export interface PlanConfig {
 
 // Бүх төлөвлөгөөний тохиргоо
 export interface PlansConfig {
-    free: PlanConfig;
+    starter: PlanConfig;
     basic: PlanConfig;
     pro: PlanConfig;
     enterprise: PlanConfig;

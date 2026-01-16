@@ -110,17 +110,17 @@ export function LeaseForm({
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">基本情報</CardTitle>
+          <CardTitle className="text-lg">Үндсэн мэдээлэл</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="tenant_id">テナント *</Label>
+            <Label htmlFor="tenant_id">Түрээслэгч *</Label>
             <select
               id="tenant_id"
               className="mt-1 w-full rounded-md border p-2"
               {...register("tenant_id")}
             >
-              <option value="">テナントを選択</option>
+              <option value="">Түрээслэгч сонгох</option>
               {tenants.map((tenant) => (
                 <option key={tenant.id} value={tenant.id}>
                   {tenant.tenant_type === "company"
@@ -137,7 +137,7 @@ export function LeaseForm({
           </div>
 
           <div>
-            <Label htmlFor="property">物件 *</Label>
+            <Label htmlFor="property">Барилга *</Label>
             <select
               id="property"
               className="mt-1 w-full rounded-md border p-2"
@@ -147,7 +147,7 @@ export function LeaseForm({
                 setValue("unit_id", "");
               }}
             >
-              <option value="">物件を選択</option>
+              <option value="">Барилга сонгох</option>
               {properties.map((property) => (
                 <option key={property.id} value={property.id}>
                   {property.name}
@@ -157,14 +157,14 @@ export function LeaseForm({
           </div>
 
           <div>
-            <Label htmlFor="unit_id">部屋 *</Label>
+            <Label htmlFor="unit_id">Өрөө *</Label>
             <select
               id="unit_id"
               className="mt-1 w-full rounded-md border p-2"
               {...register("unit_id")}
               disabled={!selectedPropertyId}
             >
-              <option value="">部屋を選択</option>
+              <option value="">Өрөө сонгох</option>
               {units.map((unit) => (
                 <option
                   key={unit.id}
@@ -191,7 +191,7 @@ export function LeaseForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label htmlFor="start_date">契約開始日 *</Label>
+              <Label htmlFor="start_date">Гэрээ эхлэх огноо *</Label>
               <Input id="start_date" type="date" {...register("start_date")} />
               {errors.start_date && (
                 <p className="mt-1 text-sm text-red-500">
@@ -200,10 +200,10 @@ export function LeaseForm({
               )}
             </div>
             <div>
-              <Label htmlFor="end_date">契約終了日</Label>
+              <Label htmlFor="end_date">Гэрээ дуусах огноо</Label>
               <Input id="end_date" type="date" {...register("end_date")} />
               <p className="mt-1 text-xs text-gray-500">
-                空欄の場合は無期限契約
+                Хоосон үед хугацаагүй гэрээ
               </p>
             </div>
           </div>
@@ -223,7 +223,7 @@ export function LeaseForm({
               )}
             </div>
             <div>
-              <Label htmlFor="deposit">敷金/保証金</Label>
+              <Label htmlFor="deposit">Барьцаа</Label>
               <Input
                 id="deposit"
                 type="number"
@@ -234,7 +234,7 @@ export function LeaseForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label htmlFor="payment_due_day">支払期日（日）</Label>
+              <Label htmlFor="payment_due_day">Төлбөрийн хугацаа (өдөр)</Label>
               <select
                 id="payment_due_day"
                 className="mt-1 w-full rounded-md border p-2"
@@ -242,22 +242,22 @@ export function LeaseForm({
               >
                 {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
                   <option key={day} value={day}>
-                    毎月{day}日
+                    Сар бүрийн {day}-нд
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <Label htmlFor="status">Статус *</Label>
+              <Label htmlFor="status">Төлөв *</Label>
               <select
                 id="status"
                 className="mt-1 w-full rounded-md border p-2"
                 {...register("status")}
               >
-                <option value="pending">保留中</option>
-                <option value="active">有効</option>
-                <option value="expired">期限切れ</option>
-                <option value="terminated">終了</option>
+                <option value="pending">Хүлээгдэж буй</option>
+                <option value="active">Идэвхтэй</option>
+                <option value="expired">Хугацаа дууссан</option>
+                <option value="terminated">Дууссан</option>
               </select>
             </div>
           </div>
@@ -285,7 +285,7 @@ export function LeaseForm({
         </Button>
         <Button type="submit" disabled={isLoading}>
           <Save className="mr-2 h-4 w-4" />
-          {isLoading ? "Хадгалах中..." : isEditing ? "更新" : "登録"}
+          {isLoading ? "Хадгалж байна..." : isEditing ? "Шинэчлэх" : "Бүртгэх"}
         </Button>
       </div>
     </form>

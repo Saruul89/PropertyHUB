@@ -63,20 +63,31 @@ export async function POST(req: NextRequest) {
 
         // Өрөө заасан бол гэрээ үүсгэх
         if (unitId) {
-            const { data: unit } = await supabase
+            const { data: unit, error: unitError } = await supabase
                 .from('units')
                 .select('monthly_rent')
                 .eq('id', unitId)
+                .eq('company_id', companyUser.company_id)
                 .single();
 
-            await supabase.from('leases').insert({
+            if (unitError) {
+                console.error('Unit fetch error:', unitError);
+            }
+
+            const rentAmount = unit?.monthly_rent ?? 0;
+
+            const { error: leaseError } = await supabase.from('leases').insert({
                 unit_id: unitId,
                 tenant_id: tenant.id,
                 company_id: companyUser.company_id,
                 start_date: new Date().toISOString().split('T')[0],
-                monthly_rent: unit?.monthly_rent || 0,
+                monthly_rent: rentAmount,
                 status: 'active',
             });
+
+            if (leaseError) {
+                console.error('Lease create error:', leaseError);
+            }
 
             await supabase.from('units').update({ status: 'occupied' }).eq('id', unitId);
         }

@@ -17,6 +17,7 @@ import {
   Phone,
   Mail,
   X,
+  Check,
 } from "lucide-react";
 
 // Social icon components (lucide deprecated the brand icons)
@@ -100,6 +101,86 @@ const LuxuryRealEstatePage = () => {
       subtitle: "Contract management",
       description:
         "Түрээсийн гэрээ бүртгэх, Гэрээний нөхцөл, өрөө тус бүрийн үнэ, хугацааг хянах",
+    },
+  ];
+
+  const pricingPlans = [
+    {
+      name: "Starter",
+      nameEn: "Жижиг",
+      price: "20",
+      period: "сар",
+      description: "Цөөхөн өрөөтэй нэг барилгын удирдлага",
+      features: [
+        "1 барилга удирдах",
+        "50 хүртэлх өрөө",
+        "Төлбөрийн төрөл тохируулах",
+        "Имэйл мэдэгдэл",
+        "Үндсэн тайлан",
+      ],
+      highlighted: false,
+      cta: "Эхлүүлэх",
+    },
+    {
+      name: "Basic",
+      nameEn: "Үндсэн",
+      price: "50",
+      period: "сар",
+      description: "Дундаж барилгын удирдлага",
+      features: [
+        "1 барилга удирдах",
+        "150 хүртэлх өрөө",
+        "Төлбөрийн төрөл тохируулах",
+        "Имэйл мэдэгдэл",
+        "Үндсэн тайлан",
+        "Давхрын зураг",
+        "Гэрээний удирдлага",
+        "Тоолуурын бүртгэл",
+        "Хувьсах төлбөр",
+      ],
+      highlighted: false,
+      cta: "Эхлүүлэх",
+    },
+    {
+      name: "Pro",
+      nameEn: "Мэргэжлийн",
+      price: "100",
+      period: "сар",
+      description: "Олон барилгын удирдлага",
+      features: [
+        "3 барилга удирдах",
+        "500 хүртэлх өрөө",
+        "Төлбөрийн төрөл тохируулах",
+        "Имэйл мэдэгдэл",
+        "Үндсэн тайлан",
+        "Давхрын зураг",
+        "Гэрээний удирдлага",
+        "Тоолуурын бүртгэл",
+        "Хувьсах төлбөр",
+        "Засвар үйлчилгээ удирдах",
+        "Портал user удирдах",
+        "SMS мэдэгдэл",
+      ],
+      highlighted: true,
+      cta: "Хамгийн түгээмэл",
+    },
+    {
+      name: "Enterprise",
+      nameEn: "Байгууллага",
+      price: "Захиалгаар",
+      period: "",
+      description: "Том компани, олон салбартай байгууллагуудад",
+      features: [
+        "Хязгааргүй барилга",
+        "Хязгааргүй өрөө",
+        "Бүх функц идэвхтэй",
+        "API хандалт",
+        "Тусгай дэмжлэг 24/7",
+        "Өөрчлөн тохируулга",
+        "Бусад",
+      ],
+      highlighted: false,
+      cta: "Холбогдох",
     },
   ];
 
@@ -282,13 +363,13 @@ const LuxuryRealEstatePage = () => {
                 className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4"
               >
                 <Link
-                  href="/register"
+                  href="/experience"
                   className="group relative px-6 py-3 md:px-8 md:py-4 rounded-xl md:rounded-2xl overflow-hidden text-center"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-600" />
                   <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-amber-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <span className="relative flex items-center justify-center gap-2 md:gap-3 text-black font-semibold text-sm md:text-base">
-                    Үнэгүй эхлүүлэх
+                    Туршиж үзэх
                     <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </Link>
@@ -608,6 +689,122 @@ const LuxuryRealEstatePage = () => {
           </div>
         </div>
 
+        {/* Pricing Section */}
+        <div
+          id="pricing"
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 mb-16 md:mb-32"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-8 md:mb-16"
+          >
+            <div className="flex items-center justify-center gap-3 md:gap-4 mb-4 md:mb-6">
+              <div className="w-8 md:w-12 h-px bg-gradient-to-r from-transparent to-amber-400" />
+              <span className="text-amber-400 text-xs md:text-sm font-medium tracking-[0.2em] uppercase">
+                Үнийн санал
+              </span>
+              <div className="w-8 md:w-12 h-px bg-gradient-to-l from-transparent to-amber-400" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold">
+              <span className="text-white">Таны бизнест тохирсон</span>
+              <span className="text-amber-400"> багц</span>
+            </h2>
+            <p className="text-sm md:text-base text-white/50 mt-4 max-w-2xl mx-auto">
+              Бизнесийнхээ хэмжээнд тохируулан сонгоорой. Хүссэн үедээ багцаа
+              өөрчлөх боломжтой.
+            </p>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {pricingPlans.map((plan, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.6 }}
+                className={`relative p-5 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl border transition-all duration-500 ${
+                  plan.highlighted
+                    ? "bg-gradient-to-br from-amber-400/20 to-amber-600/10 border-amber-400/50"
+                    : "bg-white/[0.02] border-white/10 hover:border-white/20"
+                }`}
+              >
+                {/* Popular Badge */}
+                {plan.highlighted && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full text-xs font-semibold text-black">
+                    Түгээмэл
+                  </div>
+                )}
+
+                {/* Plan Name */}
+                <div className="mb-4 md:mb-6">
+                  <h3 className="text-lg md:text-xl font-bold text-white">
+                    {plan.name}
+                  </h3>
+                  <p className="text-xs md:text-sm text-amber-400/80">
+                    {plan.nameEn}
+                  </p>
+                </div>
+
+                {/* Price */}
+                <div className="mb-4 md:mb-6">
+                  {plan.price === "0" ? (
+                    <div className="text-3xl md:text-4xl font-bold text-white">
+                      Үнэгүй
+                    </div>
+                  ) : plan.price === "Захиалгаар" ? (
+                    <div className="text-2xl md:text-3xl font-bold text-white">
+                      Захиалгаар
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl md:text-4xl font-bold text-white">
+                        ₮{plan.price}
+                      </span>
+                      <span className="text-sm text-white/50">
+                        /{plan.period}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Description */}
+                <p className="text-xs md:text-sm text-white/50 mb-4 md:mb-6 leading-relaxed">
+                  {plan.description}
+                </p>
+
+                {/* Features */}
+                <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8">
+                  {plan.features.map((feature, j) => (
+                    <li
+                      key={j}
+                      className="flex items-start gap-2 md:gap-3 text-xs md:text-sm text-white/70"
+                    >
+                      <Check className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA Button */}
+                <Link
+                  href={plan.price === "Захиалгаар" ? "#contact" : `/register?plan=${plan.name.toLowerCase()}&price=${plan.price.replace(/,/g, '')}`}
+                  className={`block w-full text-center py-3 md:py-4 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                    plan.highlighted
+                      ? "bg-gradient-to-r from-amber-400 to-amber-600 text-black hover:from-amber-500 hover:to-amber-700"
+                      : "bg-white/5 text-white hover:bg-white/10 border border-white/10"
+                  }`}
+                >
+                  {plan.cta}
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 mb-12 md:mb-20">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -636,10 +833,10 @@ const LuxuryRealEstatePage = () => {
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
                 <Link
-                  href="/register"
+                  href="/experience"
                   className="group w-full sm:w-auto px-6 md:px-10 py-3 md:py-4 bg-black text-white font-semibold rounded-xl md:rounded-2xl hover:bg-black/80 transition-colors flex items-center justify-center gap-2 md:gap-3 text-sm md:text-base"
                 >
-                  <span>Үнэгүй эхлүүлэх</span>
+                  <span>Туршиж үзэх</span>
                   <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link

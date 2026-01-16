@@ -209,8 +209,8 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
 
       // Add monthly rent
       items.push({
-        fee_name: "賃料",
-        description: `${billingMonth}月分`,
+        fee_name: "Түрээс",
+        description: `${billingMonth} сар`,
         quantity: 1,
         unit_price: lease.monthly_rent,
         amount: lease.monthly_rent,
@@ -249,7 +249,7 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
               items.push({
                 fee_type_id: feeType.id,
                 fee_name: feeType.name,
-                description: `使用量: ${meterReading.consumption.toLocaleString()} (${
+                description: `Хэрэглээ: ${meterReading.consumption.toLocaleString()} (${
                   meterReading.previous_reading
                 } → ${meterReading.current_reading})`,
                 quantity: meterReading.consumption,
@@ -305,7 +305,7 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
               items.push({
                 fee_type_id: feeType.id,
                 fee_name: feeType.name,
-                description: `使用量: ${meterReading.consumption.toLocaleString()} (${
+                description: `Хэрэглээ: ${meterReading.consumption.toLocaleString()} (${
                   meterReading.previous_reading
                 } → ${meterReading.current_reading})`,
                 quantity: meterReading.consumption,
@@ -398,12 +398,12 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
         <CardContent className="pt-6">
           <div className="text-center">
             <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-500" />
-            <h2 className="mb-2 text-xl font-semibold">請求書生成完了</h2>
+            <h2 className="mb-2 text-xl font-semibold">Нэхэмжлэх үүсгэлээ</h2>
             <p className="mb-6 text-gray-600">
-              {generatedCount}件の請求書が生成されました
+              {generatedCount} нэхэмжлэх үүсгэгдлээ
             </p>
             <Button onClick={() => router.push("/dashboard/billings")}>
-              請求一覧へ
+              Нэхэмжлэхийн жагсаалт руу
             </Button>
           </div>
         </CardContent>
@@ -429,9 +429,9 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
               {step > s ? "✓" : s}
             </div>
             <span className={step === s ? "font-medium" : "text-gray-500"}>
-              {s === 1 && "請求月を選択"}
-              {s === 2 && "対象者を選択"}
-              {s === 3 && "確認・生成"}
+              {s === 1 && "Нэхэмжлэх сар сонгох"}
+              {s === 2 && "Түрээслэгч сонгох"}
+              {s === 3 && "Шалгах・Үүсгэх"}
             </span>
             {s < 3 && <div className="mx-2 h-px w-8 bg-gray-300" />}
           </div>
@@ -446,11 +446,11 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
           {step === 1 && (
             <Card>
               <CardHeader>
-                <CardTitle>請求月を選択</CardTitle>
+                <CardTitle>Нэхэмжлэх сар сонгох</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <Label htmlFor="billingMonth">請求月</Label>
+                  <Label htmlFor="billingMonth">Нэхэмжлэх сар</Label>
                   <Input
                     id="billingMonth"
                     type="month"
@@ -460,7 +460,7 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="issueDate">発行日</Label>
+                  <Label htmlFor="issueDate">Үүсгэсэн огноо</Label>
                   <Input
                     id="issueDate"
                     type="date"
@@ -470,7 +470,7 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="dueDate">支払期限</Label>
+                  <Label htmlFor="dueDate">Төлбөрийн хугацаа</Label>
                   <Input
                     id="dueDate"
                     type="date"
@@ -481,7 +481,7 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
                 </div>
                 <div className="flex justify-end">
                   <Button onClick={() => setStep(2)}>
-                    次へ <ChevronRight className="ml-2 h-4 w-4" />
+                    Дараах <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -493,18 +493,18 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>対象者を選択</CardTitle>
+                  <CardTitle>Түрээслэгч сонгох</CardTitle>
                   <Button variant="outline" size="sm" onClick={handleSelectAll}>
                     {selectedLeaseIds.length === leases.length
-                      ? "選択解除"
-                      : "すべて選択"}
+                      ? "Сонголт цуцлах"
+                      : "Бүгдийг сонгох"}
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 {leases.length === 0 ? (
                   <p className="text-center text-gray-500">
-                    アクティブな契約がありません
+                    Идэвхтэй гэрээ байхгүй байна
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -535,7 +535,7 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
                         </div>
                         <div className="text-right">
                           <p className="font-medium">
-                            ₮{lease.monthly_rent.toLocaleString()}/月
+                            ₮{lease.monthly_rent.toLocaleString()}/сар
                           </p>
                         </div>
                       </div>
@@ -544,7 +544,7 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
                 )}
                 <div className="mt-6 flex justify-between">
                   <Button variant="outline" onClick={() => setStep(1)}>
-                    <ChevronLeft className="mr-2 h-4 w-4" /> 戻る
+                    <ChevronLeft className="mr-2 h-4 w-4" /> Буцах
                   </Button>
                   <Button
                     onClick={() => {
@@ -553,7 +553,7 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
                     }}
                     disabled={selectedLeaseIds.length === 0}
                   >
-                    次へ ({selectedLeaseIds.length}件選択)
+                    Дараах ({selectedLeaseIds.length} сонгосон)
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
@@ -566,10 +566,10 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>請求プレビュー</CardTitle>
+                  <CardTitle>Нэхэмжлэхийн урьдчилсан харагдац</CardTitle>
                   <p className="text-sm text-gray-500">
-                    {billingMonth}月分 / 支払期限:{" "}
-                    {new Date(dueDate).toLocaleDateString("ja-JP")}
+                    {billingMonth} сар / Төлбөрийн хугацаа:{" "}
+                    {new Date(dueDate).toLocaleDateString("mn-MN")}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -609,7 +609,7 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
 
                   <div className="mt-6 rounded-lg bg-gray-50 p-4">
                     <div className="flex justify-between text-lg font-bold">
-                      <span>合計 ({previewData.size}件)</span>
+                      <span>Нийт ({previewData.size})</span>
                       <span>
                         ₮
                         {Array.from(previewData.values())
@@ -623,11 +623,11 @@ export function BillingGenerate({ onComplete }: BillingGenerateProps) {
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setStep(2)}>
-                  <ChevronLeft className="mr-2 h-4 w-4" /> 戻る
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Буцах
                 </Button>
                 <Button onClick={handleGenerateBillings} disabled={submitting}>
                   <Receipt className="mr-2 h-4 w-4" />
-                  {submitting ? "生成中..." : "請求書を生成"}
+                  {submitting ? "Үүсгэж байна..." : "Нэхэмжлэх үүсгэх"}
                 </Button>
               </div>
             </div>

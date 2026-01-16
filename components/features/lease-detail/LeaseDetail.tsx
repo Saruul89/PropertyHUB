@@ -33,7 +33,7 @@ export function LeaseDetail({ lease, onRenew, onTerminate }: LeaseDetailProps) {
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("ja-JP");
+    return new Date(date).toLocaleDateString("mn-MN");
   };
 
   const getDaysUntilExpiry = (endDate: string | undefined): number | null => {
@@ -63,13 +63,13 @@ export function LeaseDetail({ lease, onRenew, onTerminate }: LeaseDetailProps) {
         {lease.status === "active" && onRenew && (
           <Button variant="outline" size="sm" onClick={onRenew}>
             <RefreshCw className="mr-2 h-4 w-4" />
-            更新
+            Сунгах
           </Button>
         )}
         {lease.status === "active" && onTerminate && (
           <Button variant="destructive" size="sm" onClick={onTerminate}>
             <XCircle className="mr-2 h-4 w-4" />
-            終了
+            Дуусгах
           </Button>
         )}
       </div>
@@ -78,7 +78,7 @@ export function LeaseDetail({ lease, onRenew, onTerminate }: LeaseDetailProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center justify-between">
-            <span>基本情報</span>
+            <span>Үндсэн мэдээлэл</span>
             <span
               className={`rounded-full px-3 py-1 text-sm ${
                 LEASE_STATUS_COLORS[lease.status]
@@ -93,7 +93,7 @@ export function LeaseDetail({ lease, onRenew, onTerminate }: LeaseDetailProps) {
             <div className="flex items-start gap-3">
               <User className="h-5 w-5 text-gray-400 mt-0.5" />
               <div>
-                <p className="text-sm text-gray-500">テナント</p>
+                <p className="text-sm text-gray-500">Түрээслэгч</p>
                 <p className="font-medium">
                   {lease.tenant?.tenant_type === "company"
                     ? lease.tenant.company_name
@@ -104,7 +104,7 @@ export function LeaseDetail({ lease, onRenew, onTerminate }: LeaseDetailProps) {
             <div className="flex items-start gap-3">
               <Building className="h-5 w-5 text-gray-400 mt-0.5" />
               <div>
-                <p className="text-sm text-gray-500">物件/部屋</p>
+                <p className="text-sm text-gray-500">Барилга/Өрөө</p>
                 <p className="font-medium">
                   {lease.unit?.property?.name} / {lease.unit?.unit_number}
                 </p>
@@ -113,10 +113,10 @@ export function LeaseDetail({ lease, onRenew, onTerminate }: LeaseDetailProps) {
             <div className="flex items-start gap-3">
               <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
               <div>
-                <p className="text-sm text-gray-500">契約期間</p>
+                <p className="text-sm text-gray-500">Гэрээний хугацаа</p>
                 <p className="font-medium">
                   {formatDate(lease.start_date)} 〜{" "}
-                  {lease.end_date ? formatDate(lease.end_date) : "無期限"}
+                  {lease.end_date ? formatDate(lease.end_date) : "Хугацаагүй"}
                 </p>
                 {daysRemaining !== null && (
                   <p
@@ -126,7 +126,7 @@ export function LeaseDetail({ lease, onRenew, onTerminate }: LeaseDetailProps) {
                         : "text-gray-500"
                     }`}
                   >
-                    残り {daysRemaining} 日
+                    Үлдсэн {daysRemaining} хоног
                   </p>
                 )}
               </div>
@@ -138,14 +138,14 @@ export function LeaseDetail({ lease, onRenew, onTerminate }: LeaseDetailProps) {
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">敷金/保証金</p>
+              <p className="text-sm text-gray-500">Барьцаа</p>
               <p className="font-medium">
                 {lease.deposit ? formatCurrency(lease.deposit) : "-"}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">支払期日</p>
-              <p className="font-medium">毎月{lease.payment_due_day}日</p>
+              <p className="text-sm text-gray-500">Төлбөрийн хугацаа</p>
+              <p className="font-medium">Сар бүрийн {lease.payment_due_day}-нд</p>
             </div>
           </div>
           {lease.notes && (

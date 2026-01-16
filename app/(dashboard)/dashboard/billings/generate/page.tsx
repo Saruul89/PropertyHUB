@@ -18,7 +18,7 @@ import {
   UnitFee,
   MeterReading,
 } from "@/types";
-import { Receipt, CheckCircle } from "lucide-react";
+import { Receipt, CheckCircle, Plus, Trash2 } from "lucide-react";
 
 interface LeaseWithDetails extends Lease {
   tenant?: Tenant;
@@ -39,6 +39,13 @@ interface BillingItemPreview {
   unit_price: number;
   amount: number;
   meter_reading_id?: string;
+  is_custom?: boolean;
+}
+
+interface CustomFeeInput {
+  id: string;
+  name: string;
+  amount: string;
 }
 
 export default function GenerateBillingPage() {
@@ -76,6 +83,11 @@ export default function GenerateBillingPage() {
 
   // Step 3: Fee types
   const [feeTypes, setFeeTypes] = useState<FeeType[]>([]);
+
+  // Step 3: Custom fees per lease
+  const [customFees, setCustomFees] = useState<Map<string, CustomFeeInput[]>>(
+    new Map()
+  );
 
   // Step 4: Preview
   const [previewData, setPreviewData] = useState<
@@ -155,6 +167,47 @@ export default function GenerateBillingPage() {
         ? prev.filter((id) => id !== leaseId)
         : [...prev, leaseId]
     );
+  };
+
+  const addCustomFee = (leaseId: string) => {
+    setCustomFees((prev) => {
+      const newMap = new Map(prev);
+      const existing = newMap.get(leaseId) || [];
+      newMap.set(leaseId, [
+        ...existing,
+        { id: crypto.randomUUID(), name: "", amount: "" },
+      ]);
+      return newMap;
+    });
+  };
+
+  const removeCustomFee = (leaseId: string, feeId: string) => {
+    setCustomFees((prev) => {
+      const newMap = new Map(prev);
+      const existing = newMap.get(leaseId) || [];
+      newMap.set(
+        leaseId,
+        existing.filter((f) => f.id !== feeId)
+      );
+      return newMap;
+    });
+  };
+
+  const updateCustomFee = (
+    leaseId: string,
+    feeId: string,
+    field: "name" | "amount",
+    value: string
+  ) => {
+    setCustomFees((prev) => {
+      const newMap = new Map(prev);
+      const existing = newMap.get(leaseId) || [];
+      newMap.set(
+        leaseId,
+        existing.map((f) => (f.id === feeId ? { ...f, [field]: value } : f))
+      );
+      return newMap;
+    });
   };
 
   const generatePreview = async () => {
@@ -344,6 +397,21 @@ export default function GenerateBillingPage() {
         }
       }
 
+      // Add custom fees for this lease
+      const leaseCustomFees = customFees.get(lease.id) || [];
+      for (const customFee of leaseCustomFees) {
+        const amount = parseFloat(customFee.amount) || 0;
+        if (customFee.name && amount > 0) {
+          items.push({
+            fee_name: customFee.name,
+            quantity: 1,
+            unit_price: amount,
+            amount,
+            is_custom: true,
+          });
+        }
+      }
+
       const total = items.reduce((sum, item) => sum + item.amount, 0);
       newPreviewData.set(lease.id, { lease, items, total });
     }
@@ -386,6 +454,23 @@ export default function GenerateBillingPage() {
       // Generate billing number with unique sequence
       const billingNumber = `${monthPrefix}${String(startNumber + count).padStart(4, "0")}`;
 
+      // Include custom fees in items and total
+      const allItems = [...data.items];
+      const leaseCustomFees = customFees.get(leaseId) || [];
+      for (const customFee of leaseCustomFees) {
+        const amount = parseFloat(customFee.amount) || 0;
+        if (customFee.name && amount > 0) {
+          allItems.push({
+            fee_name: customFee.name,
+            quantity: 1,
+            unit_price: amount,
+            amount,
+            is_custom: true,
+          });
+        }
+      }
+      const totalAmount = allItems.reduce((sum, item) => sum + item.amount, 0);
+
       // Create billing
       const { data: billing, error: billingError } = await supabase
         .from("billings")
@@ -398,9 +483,9 @@ export default function GenerateBillingPage() {
           billing_month: `${billingMonth}-01`,
           issue_date: new Date().toISOString().split("T")[0],
           due_date: dueDate,
-          subtotal: data.total,
+          subtotal: totalAmount,
           tax_amount: 0,
-          total_amount: data.total,
+          total_amount: totalAmount,
           status: "pending",
           paid_amount: 0,
         })
@@ -414,7 +499,7 @@ export default function GenerateBillingPage() {
       console.log("[Billing] Created billing:", billing.id);
 
       // Create billing items
-      for (const item of data.items) {
+      for (const item of allItems) {
         await supabase.from("billing_items").insert({
           billing_id: billing.id,
           fee_type_id: item.fee_type_id || null,
@@ -704,7 +789,18 @@ export default function GenerateBillingPage() {
                                   </p>
                                 </div>
                                 <p className="text-lg font-bold">
-                                  ₮{total.toLocaleString()}
+                                  ₮
+                                  {(
+                                    total +
+                                    (customFees.get(lease.id) || []).reduce(
+                                      (sum, cf) =>
+                                        sum +
+                                        (cf.name && parseFloat(cf.amount)
+                                          ? parseFloat(cf.amount)
+                                          : 0),
+                                      0
+                                    )
+                                  ).toLocaleString()}
                                 </p>
                               </div>
                               <div className="space-y-1 border-t pt-2 text-sm">
@@ -713,8 +809,79 @@ export default function GenerateBillingPage() {
                                     key={idx}
                                     className="flex justify-between text-gray-600"
                                   >
-                                    <span>{item.fee_name}</span>
+                                    <span>
+                                      {item.fee_name}
+                                      {item.is_custom && (
+                                        <span className="ml-1 text-xs text-blue-600">
+                                          (нэмэлт)
+                                        </span>
+                                      )}
+                                    </span>
                                     <span>₮{item.amount.toLocaleString()}</span>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Custom fee inputs */}
+                              <div className="mt-3 border-t pt-3">
+                                <div className="mb-2 flex items-center justify-between">
+                                  <span className="text-sm font-medium text-gray-700">
+                                    Нэмэлт төлбөр
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => addCustomFee(lease.id)}
+                                    className="h-7 px-2 text-blue-600 hover:text-blue-700"
+                                  >
+                                    <Plus className="mr-1 h-3 w-3" />
+                                    Нэмэх
+                                  </Button>
+                                </div>
+                                {(customFees.get(lease.id) || []).map((fee) => (
+                                  <div
+                                    key={fee.id}
+                                    className="mb-2 flex items-center gap-2"
+                                  >
+                                    <Input
+                                      placeholder="Төлбөрийн нэр"
+                                      value={fee.name}
+                                      onChange={(e) =>
+                                        updateCustomFee(
+                                          lease.id,
+                                          fee.id,
+                                          "name",
+                                          e.target.value
+                                        )
+                                      }
+                                      className="h-8 flex-1 text-sm"
+                                    />
+                                    <Input
+                                      type="number"
+                                      placeholder="Дүн"
+                                      value={fee.amount}
+                                      onChange={(e) =>
+                                        updateCustomFee(
+                                          lease.id,
+                                          fee.id,
+                                          "amount",
+                                          e.target.value
+                                        )
+                                      }
+                                      className="h-8 w-32 text-sm"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        removeCustomFee(lease.id, fee.id)
+                                      }
+                                      className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
                                   </div>
                                 ))}
                               </div>
@@ -723,16 +890,39 @@ export default function GenerateBillingPage() {
                         )}
                       </div>
 
-                      <div className="mt-6 rounded-lg bg-gray-50 p-4">
-                        <div className="flex justify-between text-lg font-bold">
-                          <span>Нийт ({previewData.size})</span>
-                          <span>
-                            ₮
-                            {Array.from(previewData.values())
-                              .reduce((sum, d) => sum + d.total, 0)
-                              .toLocaleString()}
-                          </span>
-                        </div>
+                      {/* Calculate total including custom fees */}
+                      {(() => {
+                        let grandTotal = 0;
+                        previewData.forEach(({ total }, leaseId) => {
+                          let leaseTotal = total;
+                          const leaseCustomFees = customFees.get(leaseId) || [];
+                          for (const cf of leaseCustomFees) {
+                            const amount = parseFloat(cf.amount) || 0;
+                            if (cf.name && amount > 0) {
+                              leaseTotal += amount;
+                            }
+                          }
+                          grandTotal += leaseTotal;
+                        });
+                        return (
+                          <div className="mt-6 rounded-lg bg-gray-50 p-4">
+                            <div className="flex justify-between text-lg font-bold">
+                              <span>Нийт ({previewData.size})</span>
+                              <span>₮{grandTotal.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      <div className="mt-4 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={generatePreview}
+                          className="text-sm"
+                        >
+                          Дүнг шинэчлэх
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>

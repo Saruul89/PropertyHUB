@@ -101,12 +101,12 @@ export function DocumentViewer({
                 <div className="flex flex-col items-center justify-center py-12">
                   <FileIcon className="h-16 w-16 text-gray-400 mb-4" />
                   <p className="text-gray-500 mb-2">
-                    このファイル形式はプレビューできません
+                    Энэ файлын төрлийг урьдчилан харах боломжгүй
                   </p>
                   <p className="text-sm text-gray-400 mb-4">
                     {document.file_type ||
                       document.mime_type ||
-                      "不明なファイル形式"}
+                      "Тодорхойгүй файлын төрөл"}
                   </p>
                 </div>
               )}
@@ -114,7 +114,7 @@ export function DocumentViewer({
           ) : (
             <div className="flex flex-col items-center justify-center py-12">
               <FileIcon className="h-16 w-16 text-gray-400 mb-4" />
-              <p className="text-gray-500">ファイルを読み込めませんでした</p>
+              <p className="text-gray-500">Файлыг уншиж чадсангүй</p>
             </div>
           )}
         </div>
@@ -126,17 +126,17 @@ export function DocumentViewer({
               <p className="mb-1">{document.description}</p>
             )}
             {document.file_size && (
-              <p>サイズ: {formatFileSize(document.file_size)}</p>
+              <p>Хэмжээ: {formatFileSize(document.file_size)}</p>
             )}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose}>
               <X className="mr-2 h-4 w-4" />
-              閉じる
+              Хаах
             </Button>
             <Button onClick={handleDownload} disabled={!downloadUrl}>
               <Download className="mr-2 h-4 w-4" />
-              ダウンロード
+              Татах
             </Button>
           </div>
         </div>

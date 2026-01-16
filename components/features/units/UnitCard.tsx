@@ -21,7 +21,7 @@ export function UnitCard({
   onDelete,
 }: UnitCardProps) {
   const handleDelete = () => {
-    if (onDelete && confirm("この部屋を削除しますか？")) {
+    if (onDelete && confirm("Энэ өрөөг устгах уу?")) {
       onDelete(unit.id);
     }
   };
@@ -43,7 +43,7 @@ export function UnitCard({
           {unit.area_sqm && <p>Талбай: {unit.area_sqm}m²</p>}
           {unit.rooms && <p>Өрөөний тоо: {unit.rooms}</p>}
           <p className="font-medium text-gray-900">
-            ₮{unit.monthly_rent.toLocaleString()}/月
+            ₮{unit.monthly_rent.toLocaleString()}/сар
           </p>
         </div>
 
@@ -65,7 +65,7 @@ export function UnitCard({
             >
               <Button variant="outline" size="sm" className="w-full">
                 <Pencil className="mr-1 h-3 w-3" />
-                詳細
+                Дэлгэрэнгүй
               </Button>
             </Link>
           )}

@@ -3,6 +3,7 @@
 import { useAuth } from "@/hooks";
 import { AdminSidebar } from "@/components/layout";
 import { AuthProvider } from "@/providers/auth-provider";
+import { QueryProvider } from "@/providers/query-provider";
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { loading, user, role } = useAuth();
@@ -40,8 +41,10 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthProvider>
-      <AdminLayoutContent>{children}</AdminLayoutContent>
-    </AuthProvider>
+    <QueryProvider>
+      <AuthProvider>
+        <AdminLayoutContent>{children}</AdminLayoutContent>
+      </AuthProvider>
+    </QueryProvider>
   );
 }

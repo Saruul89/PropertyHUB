@@ -18,8 +18,10 @@ import {
   Banknote,
   AlertTriangle,
   FileText,
+  QrCode,
 } from 'lucide-react';
 import { TenantBillingsSkeleton } from '@/components/skeletons';
+import { PaymentQrDialog } from '@/components/features/billings';
 
 const statusConfig: Record<BillingStatus, { label: string; color: string; icon: React.ElementType }> = {
   pending: { label: 'Төлөгдөөгүй', color: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock },

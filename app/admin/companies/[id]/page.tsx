@@ -39,6 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft,
   Building2,
@@ -66,6 +67,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import type { Company, Subscription, CompanyFeatures } from "@/types";
 import type { SubscriptionPlan, SubscriptionStatus } from "@/types/admin";
+import { PLAN_FEATURE_PRESETS, PLAN_LIMITS, PLAN_NAMES } from "@/lib/constants";
 
 interface FeatureConfig {
   key: keyof CompanyFeatures;
@@ -224,12 +226,13 @@ export default function CompanyDetailPage() {
 
   // Subscription edit form
   const [subscriptionForm, setSubscriptionForm] = useState({
-    plan: "free" as SubscriptionPlan,
-    price_per_month: 0,
+    plan: "starter" as SubscriptionPlan,
+    price_per_month: 100000,
     max_properties: 1,
     max_units: 50,
     status: "active" as SubscriptionStatus,
   });
+  const [applyPlanFeatures, setApplyPlanFeatures] = useState(true);
 
   useEffect(() => {
     if (companyId) {
@@ -251,8 +254,8 @@ export default function CompanyDetailPage() {
 
         if (sub) {
           setSubscriptionForm({
-            plan: sub.plan || "free",
-            price_per_month: sub.price_per_month || 0,
+            plan: sub.plan || "starter",
+            price_per_month: sub.price_per_month || 100000,
             max_properties: sub.max_properties || 1,
             max_units: sub.max_units || 50,
             status: sub.status || "active",
@@ -304,16 +307,26 @@ export default function CompanyDetailPage() {
   };
 
   const resetFeatures = async () => {
+    const currentPlan = subscription?.plan || "starter";
+    const planFeatures = PLAN_FEATURE_PRESETS[currentPlan as SubscriptionPlan];
+
+    if (!planFeatures) {
+      toast.error("Багцын тохиргоо олдсонгүй");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch(`/api/admin/companies/${companyId}/features`, {
-        method: "POST",
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ features: planFeatures }),
       });
       const data = await res.json();
 
       if (data.success) {
-        setFeatures(data.data.features);
-        toast.success("Функцийн тохиргоог шинэчиллээ");
+        setFeatures(planFeatures);
+        toast.success(`${PLAN_NAMES[currentPlan as SubscriptionPlan]?.name || currentPlan} багцын тохиргоог хэрэглэлээ`);
       } else {
         toast.error(data.error || "Шинэчлэхэд алдаа гарлаа");
       }
@@ -414,6 +427,7 @@ export default function CompanyDetailPage() {
   const saveSubscription = async () => {
     setSubmitting(true);
     try {
+      // Save subscription
       const res = await fetch(
         `/api/admin/companies/${companyId}/subscription`,
         {
@@ -424,13 +438,33 @@ export default function CompanyDetailPage() {
       );
       const data = await res.json();
 
-      if (data.success) {
-        toast.success("Захиалгыг шинэчиллээ");
-        setIsSubscriptionDialogOpen(false);
-        fetchCompanyData();
-      } else {
+      if (!data.success) {
         toast.error(data.error || "Шинэчлэхэд алдаа гарлаа");
+        return;
       }
+
+      // Apply plan features if checkbox is checked
+      if (applyPlanFeatures) {
+        const planFeatures = PLAN_FEATURE_PRESETS[subscriptionForm.plan];
+        if (planFeatures) {
+          const featuresRes = await fetch(
+            `/api/admin/companies/${companyId}/features`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ features: planFeatures }),
+            }
+          );
+          const featuresData = await featuresRes.json();
+          if (featuresData.success) {
+            setFeatures(planFeatures);
+          }
+        }
+      }
+
+      toast.success("Захиалгыг шинэчиллээ");
+      setIsSubscriptionDialogOpen(false);
+      fetchCompanyData();
     } catch {
       toast.error("Алдаа гарлаа");
     } finally {
@@ -842,15 +876,22 @@ export default function CompanyDetailPage() {
               <Label>Төлөвлөгөө</Label>
               <Select
                 value={subscriptionForm.plan}
-                onValueChange={(value: SubscriptionPlan) =>
-                  setSubscriptionForm({ ...subscriptionForm, plan: value })
-                }
+                onValueChange={(value: SubscriptionPlan) => {
+                  const limits = PLAN_LIMITS[value];
+                  setSubscriptionForm({
+                    ...subscriptionForm,
+                    plan: value,
+                    price_per_month: limits.price,
+                    max_properties: limits.max_properties,
+                    max_units: limits.max_units,
+                  });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="free">Free (Үнэгүй)</SelectItem>
+                  <SelectItem value="starter">Starter (Жижиг)</SelectItem>
                   <SelectItem value="basic">Basic (Үндсэн)</SelectItem>
                   <SelectItem value="pro">Pro (Мэргэжлийн)</SelectItem>
                   <SelectItem value="enterprise">
@@ -921,6 +962,19 @@ export default function CompanyDetailPage() {
                   }
                 />
               </div>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div>
+                <p className="font-medium text-blue-900">Багцын функцүүд хэрэглэх</p>
+                <p className="text-xs text-blue-600">
+                  {PLAN_NAMES[subscriptionForm.plan]?.name || subscriptionForm.plan} багцын
+                  үндсэн функцүүдийг автоматаар тохируулна
+                </p>
+              </div>
+              <Switch
+                checked={applyPlanFeatures}
+                onCheckedChange={setApplyPlanFeatures}
+              />
             </div>
           </div>
           <DialogFooter>

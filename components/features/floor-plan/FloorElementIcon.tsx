@@ -178,6 +178,82 @@ export const FloorElementIcon = ({
           </svg>
         );
 
+      case "compass":
+        return (
+          <svg
+            width={size}
+            height={size}
+            viewBox="0 0 40 40"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ transform: `rotate(${rotation}deg)` }}
+          >
+            {/* Compass circle */}
+            <circle
+              cx="20"
+              cy="20"
+              r="16"
+              fill="#FAFAFA"
+              stroke="#424242"
+              strokeWidth="2"
+            />
+            {/* Inner circle */}
+            <circle cx="20" cy="20" r="3" fill="#424242" />
+            {/* North arrow (red) */}
+            <path d="M20 4 L23 18 L20 15 L17 18 Z" fill="#E53935" />
+            {/* South arrow (white/gray) */}
+            <path d="M20 36 L23 22 L20 25 L17 22 Z" fill="#9E9E9E" />
+            {/* East arrow */}
+            <path d="M36 20 L22 17 L25 20 L22 23 Z" fill="#9E9E9E" />
+            {/* West arrow */}
+            <path d="M4 20 L18 17 L15 20 L18 23 Z" fill="#9E9E9E" />
+            {/* Direction labels */}
+            <text x="20" y="10" textAnchor="middle" fill="#E53935" fontSize="5" fontWeight="bold">N</text>
+            <text x="20" y="34" textAnchor="middle" fill="#616161" fontSize="5" fontWeight="bold">S</text>
+            <text x="32" y="22" textAnchor="middle" fill="#616161" fontSize="5" fontWeight="bold">E</text>
+            <text x="8" y="22" textAnchor="middle" fill="#616161" fontSize="5" fontWeight="bold">W</text>
+          </svg>
+        );
+
+      case "toilet":
+        return (
+          <svg
+            width={size}
+            height={size}
+            viewBox="0 0 40 40"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ transform: `rotate(${rotation}deg)` }}
+          >
+            {/* Background */}
+            <rect
+              x="5"
+              y="5"
+              width="30"
+              height="30"
+              rx="4"
+              fill="#E3F2FD"
+              stroke="#1976D2"
+              strokeWidth="2"
+            />
+            {/* Toilet bowl (top view) */}
+            <ellipse cx="20" cy="22" rx="10" ry="8" fill="#FFFFFF" stroke="#1976D2" strokeWidth="1.5" />
+            {/* Inner bowl */}
+            <ellipse cx="20" cy="23" rx="6" ry="5" fill="#E1F5FE" stroke="#42A5F5" strokeWidth="1" />
+            {/* Tank */}
+            <rect x="12" y="8" width="16" height="6" rx="2" fill="#FFFFFF" stroke="#1976D2" strokeWidth="1.5" />
+            {/* Flush button */}
+            <circle cx="20" cy="11" r="2" fill="#42A5F5" />
+            {/* Direction indicator */}
+            <path
+              d="M20 2 L24 6 L16 6 Z"
+              fill="#1976D2"
+              stroke="#0D47A1"
+              strokeWidth="0.5"
+            />
+          </svg>
+        );
+
       default:
         return null;
     }
@@ -191,6 +267,8 @@ export const ELEMENT_TYPE_LABELS: Record<FloorElementType, string> = {
   window: "Цонх",
   stairs: "Шат",
   elevator: "Цахилгаан шат",
+  compass: "Зүг чиг",
+  toilet: "Ариун цэврийн өрөө",
 };
 
 export const DIRECTION_LABELS: Record<ElementDirection, string> = {

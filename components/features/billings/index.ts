@@ -1,0 +1,1 @@
+export { PaymentQrDialog } from './PaymentQrDialog';

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, User } from 'lucide-react';
+import { Building2, User, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -79,7 +79,32 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="min-h-screen flex flex-col bg-gray-50">
+            {/* Header with back button */}
+            <div className="border-b bg-white/80 backdrop-blur-sm">
+                <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
+                    <Link
+                        href="/"
+                        className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        <span className="text-sm font-medium">Нүүр хуудас</span>
+                    </Link>
+                    <Link href="/" className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+                            <Building2 className="w-4 h-4 text-black" />
+                        </div>
+                        <span className="font-semibold">
+                            <span className="text-slate-900">Property</span>
+                            <span className="text-amber-500">Hub</span>
+                        </span>
+                    </Link>
+                    <div className="w-24" />
+                </div>
+            </div>
+
+            {/* Main content */}
+            <div className="flex-1 flex items-center justify-center px-4 py-8">
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
                     <CardTitle className="text-2xl font-bold">
@@ -189,6 +214,7 @@ export default function LoginPage() {
                     </Tabs>
                 </CardContent>
             </Card>
+            </div>
         </div>
     );
 }

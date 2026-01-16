@@ -32,18 +32,18 @@ export function MeterSubmitForm({
 
   const handleSubmit = async () => {
     if (!readingValue) {
-      setError("メーター値を入力してください");
+      setError("Тоолуурын утгыг оруулна уу");
       return;
     }
 
     const value = parseFloat(readingValue);
     if (isNaN(value)) {
-      setError("有効な数値を入力してください");
+      setError("Хүчинтэй тоо оруулна уу");
       return;
     }
 
     if (value < (meterType.lastReading ?? 0)) {
-      setError("前回の数値より小さい値は入力できません");
+      setError("Өмнөх утгаас бага утга оруулах боломжгүй");
       return;
     }
 
@@ -63,7 +63,7 @@ export function MeterSubmitForm({
         setSuccess(false);
       }, 2000);
     } catch (err) {
-      setError("送信に失敗しました");
+      setError("Илгээхэд алдаа гарлаа");
     } finally {
       setSubmitting(false);
     }
@@ -74,23 +74,23 @@ export function MeterSubmitForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Gauge className="h-5 w-5" />
-          {meterType.name}のメーター値を提出
+          {meterType.name} тоолуурын утга илгээх
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {success ? (
           <div className="flex flex-col items-center py-8 text-green-600">
             <CheckCircle className="mb-2 h-12 w-12" />
-            <p className="font-medium">提出が完了しました</p>
+            <p className="font-medium">Амжилттай илгээгдлээ</p>
             <p className="text-sm text-gray-500">
-              管理会社が確認後、承認されます
+              Удирдлагын компани шалгаж зөвшөөрнө
             </p>
           </div>
         ) : (
           <>
             <div className="rounded-lg bg-gray-50 p-4">
               <p className="text-sm text-gray-600">
-                前回の値:{" "}
+                Өмнөх утга:{" "}
                 <span className="text-lg font-bold">
                   {(meterType.lastReading ?? 0).toLocaleString()}
                 </span>
@@ -98,7 +98,7 @@ export function MeterSubmitForm({
             </div>
 
             <div>
-              <Label htmlFor="reading">今回のメーター値</Label>
+              <Label htmlFor="reading">Одоогийн тоолуурын утга</Label>
               <Input
                 id="reading"
                 type="number"
@@ -119,12 +119,12 @@ export function MeterSubmitForm({
             </div>
 
             <div>
-              <Label htmlFor="notes">メモ（任意）</Label>
+              <Label htmlFor="notes">Тэмдэглэл (заавал биш)</Label>
               <Input
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="何かあればメモを残せます"
+                placeholder="Тэмдэглэл үлдээх боломжтой"
                 className="mt-1"
               />
             </div>
@@ -139,7 +139,7 @@ export function MeterSubmitForm({
                 disabled={submitting || !readingValue}
               >
                 <Send className="mr-2 h-4 w-4" />
-                {submitting ? "送信中..." : "提出する"}
+                {submitting ? "Илгээж байна..." : "Илгээх"}
               </Button>
             </div>
           </>

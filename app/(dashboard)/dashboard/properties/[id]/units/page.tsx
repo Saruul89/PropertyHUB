@@ -215,7 +215,7 @@ export default function UnitsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("この部屋を削除しますか？")) return;
+    if (!confirm("Энэ өрөөг устгах уу?")) return;
 
     const supabase = createClient();
     const { error } = await supabase.from("units").delete().eq("id", id);

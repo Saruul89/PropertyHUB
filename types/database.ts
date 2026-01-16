@@ -609,7 +609,7 @@ export const BILLING_NUMBER_FORMAT = 'INV-{YYYYMM}-{0000}';
 export const DEFAULT_DUE_DAYS = 15;
 
 // Floor Element Types (stored in floors.elements JSONB column)
-export type FloorElementType = 'door' | 'window' | 'stairs' | 'elevator';
+export type FloorElementType = 'door' | 'window' | 'stairs' | 'elevator' | 'compass' | 'toilet';
 export type ElementDirection = 'north' | 'south' | 'east' | 'west';
 
 export interface FloorSaveInput {

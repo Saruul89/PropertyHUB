@@ -25,7 +25,7 @@ type ElementToolbarProps = {
   onDirectionChange: (direction: ElementDirection) => void;
 };
 
-const ELEMENT_TYPES: FloorElementType[] = ["door", "window", "stairs", "elevator"];
+const ELEMENT_TYPES: FloorElementType[] = ["door", "window", "stairs", "elevator", "compass", "toilet"];
 const DIRECTIONS: ElementDirection[] = ["north", "east", "south", "west"];
 
 const DIRECTION_ICONS: Record<ElementDirection, typeof ArrowUp> = {

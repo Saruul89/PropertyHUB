@@ -143,7 +143,7 @@ export default function FloorsPage() {
   if (loading) {
     return (
       <>
-        <Header title="Давхар管理" showBack />
+        <Header title="Давхрын удирдлага" showBack />
         <div className="flex h-64 items-center justify-center">
           <div className="text-gray-500">Ачааллаж байна...</div>
         </div>
@@ -154,16 +154,15 @@ export default function FloorsPage() {
   if (!hasFloorPlan) {
     return (
       <>
-        <Header title="Давхар管理" showBack />
+        <Header title="Давхрын удирдлага" showBack />
         <div className="p-6">
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <AlertTriangle className="mb-4 h-12 w-12 text-yellow-500" />
-              <p className="text-gray-500">
-                フロアプラン機能が有効になっていません。
-              </p>
+              <p className="text-gray-500">Давхрын зураг</p>
               <p className="mt-2 text-sm text-gray-400">
-                この機能を使用するには、会社設定でフロアプラン機能を有効にしてください。
+                Энэ функцийг ашиглахын тулд давхрын зураг функц авсан байх
+                шаардлагатай
               </p>
             </CardContent>
           </Card>
@@ -175,14 +174,14 @@ export default function FloorsPage() {
   return (
     <>
       <Header
-        title={`${property?.name || ""} - Давхар管理`}
+        title={`${property?.name || ""} - Давхарын удирдлага`}
         showBack
         action={
           !showForm &&
           !editingFloor && (
             <Button onClick={() => setShowForm(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Давхарを追加
+              Давхар нэмэх
             </Button>
           )
         }
@@ -206,7 +205,7 @@ export default function FloorsPage() {
           {!showForm && !editingFloor && (
             <Card>
               <CardHeader>
-                <CardTitle>登録済みのДавхар</CardTitle>
+                <CardTitle>Бүртгэгдсэн давхар</CardTitle>
               </CardHeader>
               <CardContent>
                 <FloorList
@@ -221,7 +220,7 @@ export default function FloorsPage() {
                   <div className="mt-4">
                     <Button onClick={() => setShowForm(true)}>
                       <Plus className="mr-2 h-4 w-4" />
-                      最初のДавхарを追加
+                      Эхний давхар нэмэх
                     </Button>
                   </div>
                 )}
@@ -238,9 +237,10 @@ export default function FloorsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Давхарを削除しますか？</AlertDialogTitle>
+            <AlertDialogTitle>Давхрыг устгах уу?</AlertDialogTitle>
             <AlertDialogDescription>
-              このДавхарに関連するユニットも削除されます。この操作は取り消せません。
+              Энэ давхартай холбоотой өрөөнүүд мөн устна. Буцааж болохгүй тул
+              шалгана уу.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -249,7 +249,7 @@ export default function FloorsPage() {
               onClick={handleDeleteFloor}
               className="bg-red-600 hover:bg-red-700"
             >
-              削除
+              Устгах
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -5,3 +5,4 @@ export * from './tenants';
 export * from './properties';
 export * from './maintenance';
 export * from './notifications';
+export * from './plan-features';
