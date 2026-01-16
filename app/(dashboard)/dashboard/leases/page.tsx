@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { DataTable } from '@/components/ui/data-table';
 import { getLeaseColumns } from '@/components/features/leases/lease-columns';
-import { useAuth } from '@/hooks';
+import { useAuth, useLeaseExport } from '@/hooks';
 import {
   useLeases,
   useDeleteLease,
@@ -35,6 +35,7 @@ import {
   Clock,
   XCircle,
   X,
+  Download,
 } from 'lucide-react';
 
 const statusConfig = {
@@ -49,6 +50,7 @@ export default function LeasesPage() {
   const { data: leases = [], isLoading: loading } = useLeases(companyId);
   const { data: properties = [] } = usePropertiesSimple(companyId);
   const deleteLease = useDeleteLease();
+  const { exportLeases } = useLeaseExport();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -82,12 +84,22 @@ export default function LeasesPage() {
       <Header
         title="Гэрээний удирдлага"
         action={
-          <Link href="/dashboard/leases/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Шинэ гэрээ
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => exportLeases(filteredLeases)}
+              disabled={filteredLeases.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Excel
             </Button>
-          </Link>
+            <Link href="/dashboard/leases/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Шинэ гэрээ
+              </Button>
+            </Link>
+          </div>
         }
       />
       <div className="p-6">

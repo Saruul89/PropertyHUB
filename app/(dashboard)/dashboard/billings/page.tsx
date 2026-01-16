@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/hooks';
+import { useAuth, useBillingExport } from '@/hooks';
 import { useBillings, useDeleteBilling, useCancelBilling, filterBillings, getBillingStats } from '@/hooks/queries';
 import type { BillingStatus } from '@/types';
 import { BillingsSkeleton } from '@/components/skeletons';
@@ -26,6 +26,7 @@ import {
   TrendingUp,
   AlertTriangle,
   Ban,
+  Download,
 } from 'lucide-react';
 
 const statusConfig: Record<BillingStatus, { label: string; color: string; icon: React.ElementType }> = {
@@ -52,6 +53,7 @@ export default function BillingsPage() {
 
   const deleteBilling = useDeleteBilling();
   const cancelBilling = useCancelBilling();
+  const { exportBillings } = useBillingExport();
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -161,12 +163,23 @@ export default function BillingsPage() {
               ))}
             </select>
           </div>
-          <Link href="/dashboard/billings/generate">
-            <Button className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              Нэхэмжлэх үүсгэх
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => exportBillings(filteredBillings)}
+              disabled={filteredBillings.length === 0}
+              className="w-full sm:w-auto"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Excel
             </Button>
-          </Link>
+            <Link href="/dashboard/billings/generate">
+              <Button className="w-full sm:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                Нэхэмжлэх үүсгэх
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Billings Content */}

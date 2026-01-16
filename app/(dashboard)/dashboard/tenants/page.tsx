@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { getTenantColumns } from "@/components/features/tenants/tenant-columns";
-import { useAuth } from "@/hooks";
+import { useAuth, useTenantExport } from "@/hooks";
 import {
   useTenants,
   useDeleteTenant,
@@ -25,7 +25,7 @@ import {
 import type { TenantFilters } from "@/hooks/queries";
 import type { TenantType } from "@/types";
 import { TableSkeleton } from "@/components/skeletons";
-import { Plus, Users, Search, Building2, X } from "lucide-react";
+import { Plus, Users, Search, Building2, X, Download } from "lucide-react";
 
 type AssignmentFilter = "all" | "assigned" | "unassigned";
 
@@ -34,6 +34,7 @@ export default function TenantsPage() {
   const { data: tenants = [], isLoading: loading } = useTenants(companyId);
   const { data: properties = [] } = usePropertiesSimple(companyId);
   const deleteTenant = useDeleteTenant();
+  const { exportTenants } = useTenantExport();
 
   const [search, setSearch] = useState("");
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
@@ -88,12 +89,22 @@ export default function TenantsPage() {
               className="pl-10"
             />
           </div>
-          <Link href="/dashboard/tenants/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Оршин суугч нэмэх
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => exportTenants(filteredTenants)}
+              disabled={filteredTenants.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Excel
             </Button>
-          </Link>
+            <Link href="/dashboard/tenants/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Оршин суугч нэмэх
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Filters */}

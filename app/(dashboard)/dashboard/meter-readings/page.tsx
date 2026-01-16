@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/client';
-import { useAuth, useFeature } from '@/hooks';
+import { useAuth, useFeature, useMeterReadingExport } from '@/hooks';
 import { MeterReading, FeeType, Unit, Property } from '@/types';
 import {
     Gauge,
@@ -21,6 +21,7 @@ import {
     ChevronLeft,
     ChevronRight,
     History,
+    Download,
 } from 'lucide-react';
 import { MeterReadingsSkeleton } from '@/components/skeletons';
 
@@ -34,6 +35,7 @@ const ITEMS_PER_PAGE = 20;
 export default function MeterReadingsPage() {
     const { companyId } = useAuth();
     const hasMeterReadings = useFeature('meter_readings');
+    const { exportMeterReadings } = useMeterReadingExport();
     const [meterReadings, setMeterReadings] = useState<MeterReadingWithDetails[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -232,6 +234,15 @@ export default function MeterReadingsPage() {
                         </div>
                     </div>
                     <div className="flex flex-col gap-2 sm:flex-row">
+                        <Button
+                            variant="outline"
+                            onClick={() => exportMeterReadings(filteredReadings)}
+                            disabled={filteredReadings.length === 0}
+                            className="w-full sm:w-auto"
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Excel
+                        </Button>
                         <Link href="/dashboard/meter-readings/history">
                             <Button variant="outline" className="w-full sm:w-auto">
                                 <History className="mr-2 h-4 w-4" />

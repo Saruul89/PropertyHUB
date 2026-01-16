@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { Header } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/hooks';
+import { useAuth, useReportExport } from '@/hooks';
 import {
   useBillingSummary,
   useMonthlyReport,
@@ -55,6 +55,7 @@ export default function ReportsPage() {
 
   const { data: summary, isLoading: summaryLoading, refetch: refetchSummary } = useBillingSummary(companyId, selectedMonth);
   const { data: monthlyReport, isLoading: reportLoading, refetch: refetchReport } = useMonthlyReport(companyId, selectedMonth);
+  const { exportPropertyReport, exportOverdueReport } = useReportExport();
 
   // Get previous month data for comparison
   const previousMonth = navigateMonth(selectedMonth, 'prev');
@@ -102,30 +103,37 @@ export default function ReportsPage() {
     };
   }, [summary, prevSummary]);
 
-  // Export all reports as CSV
+  // Export reports to Excel based on active tab
   const handleExportAll = () => {
-    const summaryData = [
-      ['Тайлангийн хураангуй', formatMonth(selectedMonth)],
-      [''],
-      ['Нийт нэхэмжлэл', `₮${(summary?.total_billed || 0).toLocaleString()}`],
-      ['Төлөгдсөн', `₮${(summary?.total_paid || 0).toLocaleString()}`],
-      ['Үлдэгдэл', `₮${(summary?.total_outstanding || 0).toLocaleString()}`],
-      ['Цуглуулалтын хувь', `${(summary?.collection_rate || 0).toFixed(1)}%`],
-      [''],
-      ['Нэхэмжлэлийн тоо', summary?.pending_count || 0],
-      ['Төлөгдсөн тоо', summary?.paid_count || 0],
-      ['Хугацаа хэтэрсэн', summary?.overdue_count || 0],
-    ];
+    if (activeTab === 'property' && monthlyReport?.by_property) {
+      exportPropertyReport(monthlyReport.by_property, selectedMonth);
+    } else if (activeTab === 'overdue' && monthlyReport?.overdue_tenants) {
+      exportOverdueReport(monthlyReport.overdue_tenants, selectedMonth);
+    } else {
+      // Default: export summary as CSV (for revenue tab)
+      const summaryData = [
+        ['Тайлангийн хураангуй', formatMonth(selectedMonth)],
+        [''],
+        ['Нийт нэхэмжлэл', `₮${(summary?.total_billed || 0).toLocaleString()}`],
+        ['Төлөгдсөн', `₮${(summary?.total_paid || 0).toLocaleString()}`],
+        ['Үлдэгдэл', `₮${(summary?.total_outstanding || 0).toLocaleString()}`],
+        ['Цуглуулалтын хувь', `${(summary?.collection_rate || 0).toFixed(1)}%`],
+        [''],
+        ['Нэхэмжлэлийн тоо', summary?.pending_count || 0],
+        ['Төлөгдсөн тоо', summary?.paid_count || 0],
+        ['Хугацаа хэтэрсэн', summary?.overdue_count || 0],
+      ];
 
-    const csvContent = summaryData.map(row => row.join(',')).join('\n');
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `report-summary-${selectedMonth}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const csvContent = summaryData.map(row => row.join(',')).join('\n');
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `report-summary-${selectedMonth}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   const collectionRate = summary?.collection_rate || 0;
